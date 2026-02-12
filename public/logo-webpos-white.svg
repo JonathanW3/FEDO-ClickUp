@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- WebPOS Logo para fondo oscuro -->
+  <g>
+    <!-- Web -->
+    <text x="0" y="28" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">Web</text>
+    
+    <!-- POS -->
+    <text x="64" y="28" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#10B981">POS</text>
+    
+    <!-- Elemento decorativo -->
+    <circle cx="108" cy="20" r="3" fill="#10B981"/>
+    <circle cx="115" cy="15" r="2" fill="white" opacity="0.7"/>
+  </g>
+</svg>

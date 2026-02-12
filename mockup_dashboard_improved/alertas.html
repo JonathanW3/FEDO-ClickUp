@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard de Alertas Azul</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="js/alertas.js"></script>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 text-gray-800 min-h-screen">
+  <div class="max-w-5xl mx-auto p-6">
+    
+    <!-- HEADER SUPERIOR -->
+    <header class="mb-8 flex justify-between items-center">
+      <!-- 🔵 Logo con enlace al dashboard -->
+      <a href="dashboard.html" class="flex items-center gap-3 text-blue-800 no-underline hover:opacity-90 transition">
+        <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-700 text-white font-bold text-xl shadow">
+          W
+        </div>
+        <div class="text-left">
+          <h1 class="text-2xl font-bold text-blue-800 leading-tight">WebPos</h1>
+          <p class="text-xs text-blue-700 -mt-1">Alertas</p>
+        </div>
+      </a>
+
+      <!-- 🔹 Botones: Cerrar Sesión + Menú -->
+      <div class="flex items-center gap-3 relative">
+        <button 
+          onclick="window.location.href='index.html'" 
+          class="bg-blue-700 hover:bg-blue-800 text-white font-medium px-4 py-2 rounded-lg shadow transition">
+          Cerrar Sesión
+        </button>
+
+        <div class="relative">
+          <button id="menu-btn" class="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-medium px-4 py-2 rounded-lg shadow transition">
+            ☰ Menú
+          </button>
+          <div id="menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white border border-blue-200 rounded-lg shadow-lg overflow-hidden z-50">
+            <a href="tablas.html" class="block px-4 py-2 text-blue-800 hover:bg-blue-50">Tablas</a>
+            <a href="reportes.html" class="block px-4 py-2 text-blue-800 hover:bg-blue-50">Reportes</a>
+            <a href="tecnicos_vendedores.html" class="block px-4 py-2 text-blue-800 hover:bg-blue-50">Técnicos y Vendedores</a>
+            <a href="alertas.html" class="block px-4 py-2 text-blue-800 hover:bg-blue-50">Alertas</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Panel de configuración de alertas -->
+      <section class="bg-blue-50/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-blue-200 hover:shadow-xl transition-all">
+        <h2 class="text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M19.07 4.93A10 10 0 1112 2v0a10 10 0 017.07 2.93z" />
+          </svg>
+          Alertas configurables
+        </h2>
+        <p class="text-sm text-blue-600 mb-4">Selecciona cuántas alertas mostrar y define a quién notificar.</p>
+
+        <label class="block mb-4">
+          <span class="text-sm font-medium">Número de alertas visibles</span>
+          <select id="alertsCount" class="mt-1 block w-full rounded-lg border-blue-300 focus:ring-blue-500 focus:border-blue-500">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+
+        <div id="alertsList" class="space-y-4"></div>
+
+        <div class="mt-6 flex gap-3">
+          <button id="saveConfig" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg font-medium transition">Guardar</button>
+          <button id="previewEmail" class="px-4 py-2 bg-white border border-blue-400 text-blue-700 hover:bg-blue-50 rounded-lg font-medium">Ver plantillas</button>
+        </div>
+      </section>
+
+      <!-- Panel de logs -->
+      <section class="bg-blue-50/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-blue-200 hover:shadow-xl transition-all">
+        <h2 class="text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 11V7a4 4 0 118 0v4m-9 4h10M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Actividad reciente
+        </h2>
+        <div id="log" class="h-80 overflow-auto bg-white border border-blue-200 p-3 rounded text-sm text-blue-800"></div>
+      </section>
+    </main>
+
+    <footer class="mt-10 text-center text-xs text-blue-700">
+      <p>© 2025 Sistema de Alertas</p>
+    </footer>
+  </div>
+</body>
+</html>

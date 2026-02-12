@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebPos - Reportes</title>
+  <link rel="stylesheet" href="css/reportes.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="dashboard.html" class="logo-link">
+      <div class="logo">
+        <div class="circle">W</div>
+        <h1><span>WebPos</span><br>REPORTES</h1>
+      </div>
+    </a>
+
+    <div class="header-right" style="display:flex;align-items:center;gap:10px;">
+      <button
+        onclick="window.location.href='index.html'"
+        style="
+          background:#2563eb;
+          color:white;
+          font-weight:600;
+          border:none;
+          border-radius:6px;
+          padding:8px 14px;
+          cursor:pointer;
+          box-shadow:0 2px 4px rgba(0,0,0,0.1);
+          transition:all 0.2s;
+        "
+        onmouseover="this.style.background='#1e40af'"
+        onmouseout="this.style.background='#2563eb'"
+      >
+        Cerrar Sesión
+      </button>
+
+      <div class="menu-container">
+        <button class="menu-btn">☰ Menú</button>
+        <div class="dropdown" id="menu">
+          <a href="tablas.html">Tablas</a>
+          <a href="reportes.html">Reportes</a>
+          <a href="tecnicos_vendedores.html">Técnicos y Vendedores</a>
+          <a href="alertas.html">Alertas</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="report-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre del Reporte</th>
+            <th>Descripción</th>
+            <th>Fecha de Creación</th>
+            <th>Tipo de Archivo</th>
+            <th>Csv/Excel</th>
+          </tr>
+        </thead>
+        <tbody id="reportList">
+          <tr><td>Reporte</td><td>Resumen de Ventas</td><td>01/01/2024</td><td>CSV</td><td><button class="btn csv">📄 CSV</button></td></tr>
+          <tr><td>Reporte</td><td>Análisis de Datos</td><td>02/01/2024</td><td>CSV</td><td><button class="btn csv">📄 CSV</button></td></tr>
+          <tr><td>Reporte</td><td>Resumen de Inventario</td><td>03/01/2024</td><td>Excel</td><td><button class="btn excel">📊 Excel</button></td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const menuBtn = document.querySelector(".menu-btn");
+    const dropdown = document.querySelector(".dropdown");
+    menuBtn.addEventListener("click", () => {
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
+    window.addEventListener("click", (e) => {
+      if (!e.target.closest(".menu-container")) dropdown.style.display = "none";
+    });
+  </script>
+</body>
+</html>

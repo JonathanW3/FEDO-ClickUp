@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mockup Mejorado — Iniciar sesión</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="page-center">
+    <section class="card login-card"> 
+      <div class="brand">
+        <div class="logo"></div>
+        <h1>Bienvenido</h1>
+        <p class="muted">Inicia Sesión </p>
+      </div>
+
+      <form id="loginForm" class="login-form" onsubmit="return false;">
+        <label>
+          <span>Usuario</span>
+          <input id="username" type="text" placeholder="tu usuario" required />
+        </label>
+        <label>
+          <span>Contraseña</span>
+          <input id="password" type="password" placeholder="••••••••" required />
+        </label>
+
+        <div class="actions">
+          <button id="loginBtn" class="btn primary" type="button">Iniciar sesión</button>
+          <button id="demoBtn" class="btn ghost" type="button">Entrar como demo</button>
+        </div>
+
+        <p class="note">Este es un prototipo. Cualquier credencial permitirá el acceso —o usa <strong>demo/demo</strong>.</p>
+      </form>
+    </section>
+  </main>
+
+  <script src="js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+
+    :root {
+      --azul-primario: #2979ff;
+      --azul-claro: #5aa9ff;
+      --azul-oscuro: #1a4fb3;
+      --fondo: #f4f8ff;
+      --texto: #0a2a4a;
+      --blanco: #ffffff;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--fondo);
+      color: var(--texto);
+    }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background: linear-gradient(90deg, var(--azul-oscuro), var(--azul-primario));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .circle {
+      width: 38px;
+      height: 38px;
+      background: #fff;
+      color: var(--azul-oscuro);
+      font-weight: bold;
+      font-size: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo h1 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .logo span {
+      font-weight: bold;
+      font-size: 17px;
+    }
+
+    /* Botón menú */
+    .menu-container {
+      position: relative;
+    }
+
+    .menu-btn {
+      background: var(--azul-oscuro);
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.3s;
+    }
+
+    .menu-btn:hover {
+      background: var(--azul-claro);
+    }
+
+    /* Menú desplegable */
+    .dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 48px;
+      background: var(--blanco);
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      min-width: 190px;
+      overflow: hidden;
+      z-index: 1000;
+    }
+
+    .dropdown a {
+      display: block;
+      padding: 12px 18px;
+      text-decoration: none;
+      color: var(--azul-oscuro);
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .dropdown a:hover {
+      background: #e8f0ff;
+    }
+
+    /* Contenido */
+    .container {
+      padding: 25px;
+    }
+
+    .card {
+      background: var(--blanco);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+
+    /* Tabla */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--blanco);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    th {
+      background: var(--azul-primario);
+      color: white;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background: #f2f6ff;
+    }
+
+    .btn {
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .btn.csv {
+      background: #e8f1ff;
+      color: var(--azul-oscuro);
+    }
+
+    .btn.csv:hover {
+      background: #d5e5ff;
+    }
+
+    .btn.excel {
+      background: #e3f7e8;
+      color: #1a6c2b;
+    }
+
+    .btn.excel:hover {
+      background: #c9f0d2;
+    }
+    
+    .logo-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}

@@ -1,0 +1,16 @@
+services:
+  fedo-clickup:
+    image: wpmobiledev/fedo-clickup:v1.0.4
+    pull_policy: always
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    container_name: fedo-clickup-web
+    environment:
+      - NODE_ENV=production
+    networks:
+      - fedo-network
+
+networks:
+  fedo-network:
+    driver: bridge

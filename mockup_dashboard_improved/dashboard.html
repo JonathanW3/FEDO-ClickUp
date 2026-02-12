@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Portal de Tareas</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div class="app">
+
+    <!-- HEADER SUPERIOR -->
+    <header class="app-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="brand" style="display:flex;align-items:center;gap:10px;">
+        <div class="logo" style="
+          background:#1e3a8a;
+          color:#fff;
+          font-weight:700;
+          font-size:18px;
+          width:36px;
+          height:36px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          border-radius:8px;">TK</div>
+        <div>
+          <div style="font-weight:700;color:#fff;">Portal de Tareas</div>
+          <div style="font-size:12px;opacity:0.9;color:#e0e7ff;">Soporte</div>
+        </div>
+      </div>
+
+      <div class="header-right" style="display:flex;align-items:center;gap:10px;">
+        <button id="btnLogout" onclick="window.location.href='index.html'" class="btn logout">Cerrar Sesión</button>
+
+        <div class="dropdown">
+          <button class="btn secondary dropdown-toggle" id="menuBtn">☰ Menú</button>
+          <div class="dropdown-menu" id="menuDropdown">
+            <a href="tablas.html">Tablas</a>
+            <a href="reportes.html">Reportes</a>
+            <a href="tecnicos_vendedores.html">Técnicos y Vendedores</a>
+            <a href="alertas.html">Alertas</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <div class="layout">
+      <nav class="sidebar" aria-label="Navegación principal">
+        <div style="font-weight:700;margin-bottom:8px;padding-left:10px;color:#0f172a;">NAVEGAR</div>
+
+        <div class="menu" style="display:flex;flex-direction:column;gap:8px;">
+          <button class="tab-btn active" data-view="panel-dashboard" style="text-align:left;">Menu Principal</button>
+          <button class="tab-btn" data-view="panel-tareas" style="text-align:left;">Mis Tareas</button>
+          <button class="tab-btn" data-view="panel-crear" style="text-align:left;">Crear Tareas</button>
+        </div>
+      </nav>
+
+      <main class="content" role="main">
+
+        <!-- ===================== DASHBOARD ===================== -->
+        <section id="panel-dashboard" class="panel-view" style="display:block;">
+
+          <div class="stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-bottom:24px;">
+            <div class="card kpi-card">
+              <div class="card-title">Tareas Existentes</div>
+              <div class="card-value">8</div>
+              <div class="card-subtitle">Últimas 24h</div>
+            </div>
+
+            <div class="card kpi-card">
+              <div class="card-title">Cantidad de Empresas</div>
+              <div class="card-value">20</div>
+              <div class="card-subtitle">Empresas Activas</div>
+            </div>
+
+            <!-- Gráfica Pastel -->
+            <div class="card" style="background:#fff;border-radius:12px;padding:20px;">
+              <div style="font-size:14px;color:#1d4ed8;margin-bottom:8px;">Gráfica General</div>
+              <div style="width:100%;max-width:350px;margin:auto;">
+                <canvas id="graficaPastel"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vendedores -->
+          <div class="card" style="background:#fff;border-radius:12px;padding:20px;margin-bottom:24px;">
+            <div style="font-size:15px;color:#1d4ed8;margin-bottom:12px;">Vendedores</div>
+            <canvas id="graficaVendedores" style="width:100%;height:320px;"></canvas>
+          </div>
+
+          <!-- Técnicos -->
+          <div class="card" style="background:#fff;border-radius:12px;padding:20px;margin-bottom:24px;">
+            <div style="font-size:15px;color:#1d4ed8;margin-bottom:12px;">Técnicos</div>
+            <canvas id="graficaTecnicos" style="width:100%;height:320px;"></canvas>
+          </div>
+
+          <!-- 🔵 Nueva gráfica de línea de tiempo -->
+          <div class="card" style="background:#fff;border-radius:12px;padding:20px;margin-bottom:40px;">
+            <div style="font-size:15px;color:#1d4ed8;margin-bottom:12px;">Línea de tiempo - Empresas incorporadas</div>
+            <canvas id="graficaLineaTiempo" style="width:100%;height:340px;"></canvas>
+          </div>
+
+        </section>
+
+        <!-- ===================== MIS TAREAS ===================== -->
+        <section id="panel-tareas" class="panel-view" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;row-gap:8px;">
+            <h2 style="margin:0;color:#0f172a;">Mis Tareas</h2>
+          </div>
+
+          <div class="card" style="margin-bottom:12px;">
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+              <input type="search" id="buscarTarea" placeholder="Buscar tarea...">
+              <select id="fEstado">
+                <option value="">Todos los estados</option>
+                <option>Por hacer</option>
+                <option>En progreso</option>
+                <option>Bloqueada</option>
+                <option>Completada</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card" style="background:#fff;border-radius:12px;padding:16px;">
+            <table id="taskTable" style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="text-align:left;font-size:13px;color:#475569;border-bottom:1px solid rgba(0,0,0,0.06);">
+                  <th style="padding:8px;">TAREA</th>
+                  <th style="padding:8px;">RESPONSABLE</th>
+                  <th style="padding:8px;">PRIORIDAD</th>
+                  <th style="padding:8px;">ESTADO</th>
+                  <th style="padding:8px;">FECHA LÍMITE</th>
+                </tr>
+              </thead>
+              <tbody style="font-size:13px;color:#0f172a;"></tbody>
+            </table>
+          </div>
+        </section>
+
+<!-- ===================== CREAR TAREAS ===================== -->
+<section id="panel-crear" class="panel-view" style="display:none;">
+  <div class="card" style="background:#fff;border-radius:12px;padding:32px;">
+    <h1 style="text-align:center;color:#1e3a8a;font-size:26px;margin-bottom:30px;">Crear Nueva Tarea</h1>
+
+    <form id="form-tarea" style="display:grid;gap:20px;">
+      <!-- SECCIÓN 1 -->
+      <div class="form-grid" style="display:grid;grid-template-columns:repeat(2,minmax(300px,1fr));gap:24px;">
+        <div class="form-group"><label>Asignar</label>
+          <select>
+            <option value="">Seleccione...</option>
+            <option value="tecnico1">Técnico Integrador</option>
+            <option value="tecnico2">Técnico de Campo</option>
+            <option value="vendedor1">Vendedor</option>
+            <option value="vendedor2">Distribuidor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Fecha inicio</label><input type="date"></div>
+        <div class="form-group"><label>Cantidad de ClientFE</label><input type="number"></div>
+        <div class="form-group"><label>Celular </label><input type="text"></div>
+        <div class="form-group"><label>Email técnico</label><input type="email"></div>
+        <div class="form-group"><label>Confirmar</label>
+          <div>
+            <label><input type="checkbox"> Acceso al portal de certificaiones de la DGII</label><br>
+            <label><input type="checkbox"> Firma electronica, archivo p12 y contraseña</label><br>
+            <label><input type="checkbox"> No tiene la firma aun</label><br>
+            <label><input type="checkbox"> No tiene el acceso al portal de certificion</label>
+            <label><input type="checkbox"> Cambio de Representante</label>
+          </div>
+        </div>
+        <div class="form-group"><label>Dirección física</label><input type="text"></div>
+        <div class="form-group"><label>Fecha contratación</label><input type="date"></div>
+        <div class="form-group">
+        <label>Formato</label>
+          <select>
+            <option value="">Seleccione...</option>
+            <option value="XML">XML</option>
+            <option value="JSON">JSON</option>
+            <option value="TEXT">TEXT</option>
+            <option value="CSV">CSV</option>
+            <option value="SQL">SQL</option>
+            <option value="WEB">WEB</option>
+            <option value="TEXT-VPrt">TEXT-VPrt</option>  
+          </select>
+        </div>
+        <div class="form-group"><label>Nombre cliente</label><input type="text"></div>
+        <div class="form-group"><label>Nombre contacto</label><input type="text"></div>
+        <div class="form-group"><label>Monto de implementación</label><input type="number" step="0.01"></div>
+      </div>
+
+      <hr>
+
+      <!-- SECCIÓN 2 -->
+      <div class="form-grid" style="display:grid;grid-template-columns:repeat(2,minmax(300px,1fr));gap:24px;">
+        <div class="form-group"><label>Procesamiento anual</label><input type="text"></div>
+        <div class="form-group"><label>Sistema a integrar</label>
+          <select>
+            <option value="">Seleccione...</option>
+            <option value="erp">Sistema 1</option>
+            <option value="crm">Sistema 2</option>
+            <option value="inventario">Sistema 3</option>
+            <option value="facturacion">Sistema 4</option>
+            <option value="contabilidad">Sistema 5</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Versión</label>
+          <select>
+            <option value="">Seleccione...</option>
+            <option value="v1">Hostel Taticl v: 1</option>
+            <option value="v2">QuickBooks v: 1</option>
+            <option value="v3">WebPOS en la Nube v: 1</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+        <label>Transmisión</label>
+          <select>
+            <option value="">Seleccione...</option>
+            <option value="API/Rest">API/Rest</option>
+            <option value="SOAP">SOAP</option>
+            <option value="Shared Folder">Shared Folder/Client FE</option>
+            <option value="DB Connectros">DB Connectros?Client FE</option>
+            <option value="Email">Email</option>
+            <option value="Cliente FE/Api">Cliente FE/Api</option>
+            <option value="Cliente FE/SOAP">Cliente FE/SOAP</option>
+            <option value="WEB/PORTAL">WEB/PORTAL</option>
+          </select>
+        </div>
+
+        <div class="form-group"><label>Requisitos</label>
+          <div>
+            <label><input type="checkbox"> Firmo Propuestas</label><br>
+            <label><input type="checkbox"> Hizo el avance</label><br>
+            <label><input type="checkbox"> No ha echo el avance</label><br>
+            <label><input type="checkbox"> Firmo carta de autorizacion de uso de firma</label><br>
+            <label><input type="checkbox"> No ha firmado carta de autorizacion de uso de firma</label><br>
+            <label><input type="checkbox"> No ha firmado acuerdo de servicios</label><br>
+            <label><input type="checkbox"> Firmo acuerdo de servicio</label>
+          </div>
+        </div>
+        <div class="form-group"><label>Abono</label><input type="text"></div>
+        <div class="form-group full" style="grid-column:1/-1;">
+          <label>Resumen de lo contratado</label><textarea rows="3" style="width:100%;"></textarea>
+        </div>
+        <div class="form-group"><label>Vendedor</label>
+          <select>
+            <option value="">Seleccione...</option>
+            <option value="juan">Juan Pérez</option>
+            <option value="maria">María López</option>
+            <option value="carlos">Carlos Gómez</option>
+            <option value="sofia">Sofía Ramírez</option>
+            <option value="externo">Vendedor Externo</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Vendedor / Distribuidor</label>
+          <select>
+            <option value="">Seleccione...</option>
+            <option value="directo">Vendedor Directo</option>
+            <option value="distribuidor_norte">Distribuidor Norte</option>
+            <option value="distribuidor_sur">Distribuidor Sur</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group"><label>¿Es un grupo?</label>
+          <div>
+            <label><input type="radio" name="grupo" value="si"> Sí</label>
+            <label><input type="radio" name="grupo" value="no" checked> No</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN GRUPO -->
+      <div id="grupo-section" style="display:none;">
+        <div class="form-grid" style="display:grid;grid-template-columns:repeat(2,minmax(300px,1fr));gap:24px;">
+          <div class="form-group"><label>Nombre del Grupo</label><input type="text" placeholder="Ingrese nombre del grupo"></div>
+          <div class="form-group"><label>Cantidad NRCs</label>
+            <select id="cantidad-nrcs">
+              <option value="0">Seleccione...</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+        </div>
+        <div id="nrc-container"></div>
+      </div>
+
+      <div style="text-align:center;margin-top:30px;">
+        <button type="submit" class="btn" style="background:#1d4ed8;color:#fff;padding:10px 30px;border-radius:8px;font-weight:600;">Guardar Registro</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+  <!-- SCRIPT INTERNO DEL FORMULARIO -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const radios = document.querySelectorAll("input[name='grupo']");
+      const grupoSection = document.getElementById("grupo-section");
+      const cantidadNrcs = document.getElementById("cantidad-nrcs");
+      const nrcContainer = document.getElementById("nrc-container");
+
+      radios.forEach(radio => {
+        radio.addEventListener("change", () => {
+          grupoSection.style.display = radio.value === "si" ? "block" : "none";
+          if (radio.value === "no") nrcContainer.innerHTML = "";
+        });
+      });
+
+      cantidadNrcs.addEventListener("change", () => {
+        const cantidad = parseInt(cantidadNrcs.value);
+        nrcContainer.innerHTML = "";
+        for (let i = 1; i <= cantidad; i++) {
+          const block = document.createElement("div");
+          block.classList.add("nrc-block");
+          block.innerHTML = `
+            <h4 style="color:#1e40af;margin-top:20px;">NRC #${i}</h4>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+              <div><label>Nombre</label><input type="text" style="width:100%;"></div>
+              <div><label>RNC</label><input type="text" style="width:100%;"></div>
+              <div><label>Email</label><input type="email" style="width:100%;"></div>
+              <div><label>Dirección</label><input type="text" style="width:100%;"></div>
+            </div>
+            <div><input type="checkbox" id="activo-${i}"><label for="activo-${i}"> Activo</label></div>
+          `;
+          nrcContainer.appendChild(block);
+        }
+      });
+    });
+  </script>
+</section>
+
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const menuBtn = document.getElementById("menuBtn");
+    const dropdown = menuBtn.closest(".dropdown");
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("active");
+    });
+    document.addEventListener("click", (e) => {
+      if (!dropdown.contains(e.target)) dropdown.classList.remove("active");
+    });
+
+    // Tabs (para mostrar/ocultar paneles)
+    document.addEventListener("DOMContentLoaded", () => {
+      const tabButtons = document.querySelectorAll(".tab-btn");
+      const panels = document.querySelectorAll(".panel-view");
+      tabButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-view");
+          tabButtons.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          panels.forEach(p => p.style.display = (p.id === id) ? "block" : "none");
+          if (id === "panel-tareas") renderTasks();
+        });
+      });
+      renderTasks();
+    });
+
+    const tareas = [
+      { titulo:"Instalar router", responsable:"Técnico 1", prioridad:"Alta", estado:"En progreso", fecha:"2025-10-30" },
+      { titulo:"Enviar informe", responsable:"Gabriel", prioridad:"Media", estado:"Por hacer", fecha:"2025-10-29" },
+      { titulo:"Llamar al cliente", responsable:"Técnico 2", prioridad:"Baja", estado:"Completada", fecha:"2025-10-25" }
+    ];
+
+    function renderTasks() {
+      const tbody = document.querySelector("#taskTable tbody");
+      tbody.innerHTML = "";
+      tareas.forEach(t => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${t.titulo}</td>
+            <td>${t.responsable}</td>
+            <td>${t.prioridad}</td>
+            <td>${t.estado}</td>
+            <td>${t.fecha}</td>
+          </tr>`;
+      });
+    }
+
+    // === GRÁFICAS ===
+    document.addEventListener("DOMContentLoaded", () => {
+      const pastel = document.getElementById("graficaPastel");
+      if (pastel) new Chart(pastel, {
+        type:"pie",
+        data:{labels:["Abiertas","Pendientes","Cerradas"],datasets:[{data:[24,12,8],backgroundColor:["#3b82f6","#facc15","#22c55e"]}]},
+        options:{plugins:{legend:{position:"bottom"}}}
+      });
+
+      const vend = document.getElementById("graficaVendedores");
+      if (vend) new Chart(vend,{type:"bar",data:{labels:["Vendedor 1","Vendedor 2","Vendedor 3","Vendedor 4","Vendedor 5"],datasets:[{data:[15,30,5,20,25],backgroundColor:["#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899"],borderRadius:10}]}});
+
+      const tec = document.getElementById("graficaTecnicos");
+      if (tec) new Chart(tec,{type:"bar",data:{labels:["Técnico 1","Técnico 2","Técnico 3","Técnico 4"],datasets:[{data:[12,25,18,10],backgroundColor:["#06b6d4","#3b82f6","#10b981","#8b5cf6"],borderRadius:10}]}});
+
+      // 🔵 Línea de tiempo
+      const linea = document.getElementById("graficaLineaTiempo");
+      if (linea) new Chart(linea, {
+        type: "line",
+        data: {
+          labels: ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"],
+          datasets: [{
+            label: "Empresas incorporadas",
+            data: [2,4,7,10,13,15,19,22,25,28,31,35],
+            fill: true,
+            borderColor: "#2563eb",
+            backgroundColor: "rgba(37,99,235,0.1)",
+            tension: 0.4,
+            pointBackgroundColor: "#1d4ed8",
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: "Cantidad de Empresas" } },
+            x: { title: { display: true, text: "Meses del Año" } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

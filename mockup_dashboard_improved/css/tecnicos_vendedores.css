@@ -1,0 +1,334 @@
+:root {
+  --azul-claro: #eaf4ff;
+  --azul: #4a9cff;
+  --azul-medio: #2b7be9;
+  --azul-oscuro: #1d4ed8;
+  --blanco: #ffffff;
+  --texto: #1e293b;
+  --gris: #f1f5f9;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: linear-gradient(180deg, #f8fbff, #eaf3ff);
+  color: var(--texto);
+  min-height: 100vh;
+}
+
+/* ---------- BARRA SUPERIOR ---------- */
+.topbar {
+  background: linear-gradient(90deg, var(--azul-medio), var(--azul-oscuro));
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.circle {
+  width: 42px;
+  height: 42px;
+  background: var(--blanco);
+  color: var(--azul-oscuro);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 22px;
+}
+
+.logo h1 {
+  line-height: 1.1;
+  font-size: 18px;
+}
+
+.logo span {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.top-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---------- BOTONES ---------- */
+.perfil-btn, #menu-btn {
+  background: var(--azul);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.perfil-btn:hover, #menu-btn:hover {
+  background: var(--azul-oscuro);
+}
+
+/* ---------- MENÚ ---------- */
+.menu-container {
+  position: relative;
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 45px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+  overflow: hidden;
+  z-index: 10;
+  width: 180px;
+}
+
+.dropdown a {
+  display: block;
+  padding: 12px 16px;
+  color: var(--azul-oscuro);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.dropdown a:hover {
+  background: #e9f2ff;
+}
+
+/* ---------- CONTENIDO ---------- */
+.container {
+  padding: 40px;
+}
+
+.content {
+  background: var(--blanco);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+}
+
+h2 {
+  margin: 20px 0 10px;
+  color: var(--azul-oscuro);
+  font-size: 20px;
+}
+
+.add-btn {
+  background: linear-gradient(90deg, var(--azul), var(--azul-oscuro));
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+
+.add-btn:hover {
+  background: var(--azul-medio);
+}
+
+/* ---------- TABLA ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th, td {
+  text-align: left;
+  padding: 10px 12px;
+}
+
+th {
+  background: var(--azul-claro);
+  color: var(--azul-oscuro);
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background: #f9fbff;
+}
+
+.actions {
+  text-align: center;
+}
+
+/* ---------- MODAL ---------- */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 10px;
+  width: 340px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  border-top: 6px solid var(--azul-oscuro);
+}
+
+.modal-content h3 {
+  color: var(--azul-oscuro);
+  font-size: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.modal-content label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--azul-oscuro);
+  margin-top: 10px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+  border: 1px solid #d0d7e2;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #f8fbff;
+  outline: none;
+}
+
+.modal-content input:focus {
+  border-color: var(--azul);
+  box-shadow: 0 0 0 2px rgba(43,155,230,0.2);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.guardar {
+  background: linear-gradient(90deg, var(--azul), var(--azul-oscuro));
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.cancelar {
+  background: #fff;
+  color: var(--azul-oscuro);
+  border: 1px solid var(--azul-oscuro);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.guardar:hover {
+  background: var(--azul-oscuro);
+}
+
+.cancelar:hover {
+  background: #eaf3ff;
+}
+
+/* ---------- MODAL ELIMINAR ---------- */
+.modal-content.eliminar {
+  text-align: center;
+  width: 400px;
+  padding: 25px;
+}
+
+.modal-content.eliminar h3 {
+  color: var(--texto);
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.nombre-usuario {
+  font-size: 16px;
+  color: var(--azul-oscuro);
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.eliminar-btn {
+  background: linear-gradient(90deg, #ff5c5c, #d81b1b);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.eliminar-btn:hover {
+  background: #c91414;
+}
+
+/* ---------- TOAST (Notificación) ---------- */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: linear-gradient(90deg, var(--azul), var(--azul-oscuro));
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(30px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  z-index: 200;
+}
+
+/* Visible */
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.logo-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}
+
+

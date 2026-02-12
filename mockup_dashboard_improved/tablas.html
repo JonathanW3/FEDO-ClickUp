@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tablas de Contenido - WebPOS</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/tablas.css" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="topbar">
+    <a href="dashboard.html" class="logo-link">
+      <div class="brand">W</div>
+    </a>
+
+    <div class="header-right" style="display:flex;align-items:center;gap:10px;">
+      <button
+        onclick="window.location.href='index.html'"
+        style="
+          background:#2563eb;
+          color:white;
+          font-weight:600;
+          border:none;
+          border-radius:6px;
+          padding:8px 14px;
+          cursor:pointer;
+          box-shadow:0 2px 4px rgba(0,0,0,0.1);
+          transition:all 0.2s;
+        "
+        onmouseover="this.style.background='#1e40af'"
+        onmouseout="this.style.background='#2563eb'"
+      >
+        Cerrar Sesión
+      </button>
+
+      <div class="dropdown">
+        <button class="btn dropdown-toggle" id="menuBtn">☰ Menú</button>
+        <div class="dropdown-menu" id="menuDropdown">
+          <a href="tablas.html">Tablas</a>
+          <a href="reportes.html">Reportes</a>
+          <a href="tecnicos_vendedores.html">Técnicos y Vendedores</a>
+          <a href="alertas.html">Alertas</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <aside class="sidebar">
+      <div class="panel">
+        <h3>NAVEGAR</h3>
+        <label for="startDate">Fecha inicio:</label>
+        <input id="startDate" type="date" />
+        <label for="endDate">Fecha fin:</label>
+        <input id="endDate" type="date" />
+        <label for="categorySelect">Categoría:</label>
+        <select id="categorySelect">
+          <option value="all">Todas</option>
+        </select>
+        <button id="applyFilters" class="btn">Aplicar filtros</button>
+        <button id="resetFilters" class="btn btn-outline">Reset</button>
+      </div>
+    </aside>
+
+    <section class="content">
+      <h2 class="page-title">TABLAS DE DATOS</h2>
+      <div class="grid">
+        <div class="card small"><h4>Título 1</h4><canvas id="chartBar"></canvas></div>
+        <div class="card small"><h4>Título 2</h4><canvas id="chartHBar"></canvas></div>
+        <div class="card small"><h4>Título 3</h4><canvas id="chartLine"></canvas></div>
+        <div class="card small"><h4>Título 4</h4><canvas id="chartArea"></canvas></div>
+        <div class="card medium"><h4>Título 5</h4><canvas id="chartDoughnut1"></canvas></div>
+        <div class="card medium"><h4>Título 7</h4><canvas id="chartDoughnut2"></canvas></div>
+        <div class="card wide"><h4>Título 9</h4><canvas id="chartSpark"></canvas></div>
+        <div class="card wide"><h4>Título 10</h4><canvas id="chartCombo"></canvas></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const menuBtn = document.getElementById("menuBtn");
+    const dropdown = menuBtn.closest(".dropdown");
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle("active");
+    });
+    document.addEventListener("click", (e) => {
+      if (!dropdown.contains(e.target)) dropdown.classList.remove("active");
+    });
+  </script>
+
+  <script src="scripts.js"></script>
+</body>
+</html>

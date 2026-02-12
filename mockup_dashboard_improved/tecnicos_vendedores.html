@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebPos - Personal</title>
+  <link rel="stylesheet" href="css/tecnicos_vendedores.css">
+  <script defer src="js/tecnicos_vendedores.js"></script>
+</head>
+
+<body>
+  <!-- 🔵 Barra superior -->
+  <header class="topbar">
+    <a href="dashboard.html" class="logo-link">
+      <div class="logo">
+        <div class="circle">W</div>
+        <h1><span>webPos</span><br><small>Personal</small></h1>
+      </div>
+    </a>
+
+    <div class="top-buttons">
+      <button onclick="window.location.href='index.html'" class="perfil-btn" style="background: var(--azul-oscuro);">
+        Cerrar Sesión
+      </button>
+
+      <div class="menu-container" style="position: relative; z-index: 50;">
+        <button id="menu-btn">☰ Menú</button>
+        <div id="menu-dropdown" class="dropdown">
+          <a href="tablas.html">Tablas</a>
+          <a href="reportes.html">Reportes</a>
+          <a href="tecnicos_vendedores.html">Personal</a>
+          <a href="alertas.html">Alertas</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 🧩 Contenido principal -->
+  <main class="container">
+    <section class="content">
+
+      <h2>Personal WebPos</h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="add-btn" id="add-tecnico-btn">Agregar Técnico</button>
+        <button class="add-btn" id="add-vendedor-btn">Agregar Vendedor</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- 🧰 Modal Agregar Técnico -->
+  <div id="modal-tecnico" class="modal">
+    <div class="modal-content">
+      <h3>👨‍🔧 Agregar Técnico</h3>
+      <label for="nombre">Nombre Completo</label>
+      <input type="text" id="nombre" placeholder="Ej. Ana García López">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="Ej. ana@correo.com">
+      <label for="telefono">Teléfono</label>
+      <input type="text" id="telefono" placeholder="Ej. 0999999999">
+      <div class="modal-actions">
+        <button id="guardar-btn" class="guardar">Guardar</button>
+        <button id="cancelar-btn" class="cancelar">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🧰 Modal Agregar Vendedor -->
+  <div id="modal-vendedor" class="modal">
+    <div class="modal-content">
+      <h3>🧑‍💼 Agregar Vendedor</h3>
+      <label for="nombre-v">Nombre Completo</label>
+      <input type="text" id="nombre-v" placeholder="Ej. Sofía Fernández">
+      <label for="email-v">Email</label>
+      <input type="email" id="email-v" placeholder="Ej. sofia@correo.com">
+      <label for="telefono-v">Teléfono</label>
+      <input type="text" id="telefono-v" placeholder="Ej. 0999999999">
+      <div class="modal-actions">
+        <button id="guardar-v-btn" class="guardar">Guardar</button>
+        <button id="cancelar-v-btn" class="cancelar">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🗑️ Modal Eliminar -->
+  <div id="modal-eliminar" class="modal">
+    <div class="modal-content eliminar">
+      <h3>¿Estás seguro que quieres eliminar a este usuario?</h3>
+      <p class="nombre-usuario">🧑‍💻 <span id="nombre-eliminar">[Nombre]</span></p>
+      <div class="modal-actions">
+        <button id="eliminar-btn" class="eliminar-btn">Eliminar</button>
+        <button id="volver-btn" class="cancelar">Volver Atrás</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✏️ Modal Editar -->
+  <div id="modal-editar" class="modal">
+    <div class="modal-content">
+      <h3>✏️ Editar Usuario</h3>
+      <label for="edit-nombre">Nombre</label>
+      <input type="text" id="edit-nombre">
+      <label for="edit-email">Email</label>
+      <input type="email" id="edit-email">
+      <label for="edit-telefono">Teléfono</label>
+      <input type="text" id="edit-telefono">
+      <div class="modal-actions">
+        <button id="guardar-edit-btn" class="guardar">Guardar Cambios</button>
+        <button id="cancelar-edit-btn" class="cancelar">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">✅</div>
+</body>
+</html>

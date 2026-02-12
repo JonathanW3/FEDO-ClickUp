@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base body styling */
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+}
+
+/* Extra helpers to mimic original styles where needed */
+.card { 
+  @apply bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.card.kpi-card .card-value {
+  @apply text-4xl font-bold text-blue-700;
+}
+
+.btn { @apply px-4 py-2 rounded-lg font-medium transition; }
+.btn-primary { @apply bg-blue-700 text-white hover:bg-blue-800; }
+.btn-ghost { @apply border border-blue-300 text-blue-700 hover:bg-blue-50; }
+.topbar { @apply w-full sticky top-0 z-40 bg-white/70 backdrop-blur border-b; }
+
+/* Dashboard specific styles */
+.app-header {
+  background: rgba(30, 64, 175, 0.9);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  position: relative;
+  z-index: 9999;
+}
+
+.sidebar {
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+}
+
+/* Tab buttons in sidebar */
+.tab-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 10px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #1e3a8a;
+  transition: 0.3s;
+}
+
+.tab-btn:hover {
+  background: #e0f2ff;
+}
+
+.tab-btn.active {
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  color: white;
+}
+
+/* Dropdown styles */
+.dropdown {
+  position: relative;
+  z-index: 9999;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 48px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  min-width: 210px;
+  overflow: hidden;
+  z-index: 99999;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: 12px 18px;
+  color: #1e3a8a;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.dropdown-menu a:hover {
+  background: rgba(220, 235, 255, 0.9);
+  transform: translateX(2px);
+}
+
+.dropdown.active .dropdown-menu {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
