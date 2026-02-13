@@ -15,11 +15,13 @@ const N8N_BASE_URL = import.meta.env.VITE_N8N_BASE_URL || 'https://n8n-dev.waopo
 export async function callN8NAPI(endpoint, options = {}) {
   const url = `${N8N_BASE_URL}/${endpoint}`;
 
+  const isFormData = options.body instanceof FormData;
+
   const defaultOptions = {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: isFormData
+      ? {} // sin headers para FormData
+      : { 'Content-Type': 'application/json' },
   };
 
   const mergedOptions = {
@@ -31,10 +33,18 @@ export async function callN8NAPI(endpoint, options = {}) {
     },
   };
 
-  console.log(`🌐 Llamando a N8N API: ${url}`, {
-    method: mergedOptions.method,
-    body: mergedOptions.body ? JSON.parse(mergedOptions.body) : null
-  });
+    if (isFormData) {
+      console.log(`🌐 Llamando a N8N API: ${url}`);
+      console.log('📦 Payload: FormData');
+      for (const [key, value] of options.body.entries()) {
+        console.log(`  • ${key}:`, value);
+      }
+    } else {
+      console.log(`🌐 Llamando a N8N API: ${url}`, {
+        method: mergedOptions.method,
+        body: mergedOptions.body ? JSON.parse(mergedOptions.body) : null
+      });
+    }
 
   try {
     const response = await fetch(url, mergedOptions);
@@ -239,12 +249,13 @@ export async function crearMiembro(datosPersonal) {
 // Crear nueva tarea
 export async function crearTarea(datosTarea) {
   console.log('📤 Enviando tarea al webhook N8N...')
-  console.log('📦 Payload completo:', JSON.stringify(datosTarea, null, 2))
+  console.log('📦 Payload completo:', datosTarea)
   
   try {
-    const response = await callN8NAPI('c49681de-ed44-4032-a426-ebe3c911a030', {
+    // const response = await callN8NAPI('c49681de-ed44-4032-a426-ebe3c911a030', {
+    const response = await callN8NAPI('pruebas', {
       method: 'POST',
-      body: JSON.stringify(datosTarea)
+      body: datosTarea
     })
     
     console.log('✅ Tarea creada exitosamente:', response)
