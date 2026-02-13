@@ -252,8 +252,7 @@ export async function crearTarea(datosTarea) {
   console.log('📦 Payload completo:', datosTarea)
   
   try {
-    // const response = await callN8NAPI('c49681de-ed44-4032-a426-ebe3c911a030', {
-    const response = await callN8NAPI('pruebas', {
+    const response = await callN8NAPI('c49681de-ed44-4032-a426-ebe3c911a030', {
       method: 'POST',
       body: datosTarea
     })
