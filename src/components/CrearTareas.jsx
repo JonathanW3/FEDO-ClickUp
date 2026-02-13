@@ -53,7 +53,13 @@ export default function CrearTareas() {
   const [cargandoVendedores, setCargandoVendedores] = useState(false)
   const [vendedoresFiltrados, setVendedoresFiltrados] = useState([])
   const [mostrarVendedores, setMostrarVendedores] = useState(false)
-  
+  const [files, setFiles] = useState([]);
+
+  // Agregar estado para manejar la carga de archivos
+  const handleFileChange = (e) => {
+    setFiles(e.target.files);
+  };
+
   // Estado para notificaciones profesionales
   const [notificacion, setNotificacion] = useState({
     mostrar: false,
@@ -412,16 +418,21 @@ export default function CrearTareas() {
         .map(key => textoRequisitos[key])
 
       // Preparar los datos para enviar con el formato solicitado
-      const datosParaAPI = {
-        formData: formData,
-        confirmaciones: {
-          "true": confirmacionesTrue
-        },
-        requisitos: {
-          "true": requisitosTrue
-        },
-        nrcs: nrcs
-      }
+      const datosParaAPI = new FormData()
+
+      Object.entries(formData).forEach(([key, value]) => {
+        datosParaAPI.append(key, value ?? '')
+      })
+
+      confirmacionesTrue.forEach(c => datosParaAPI.append('confirmaciones[]', c))
+      requisitosTrue.forEach(r => datosParaAPI.append('requisitos[]', r))
+
+      datosParaAPI.append('nrcs', JSON.stringify(nrcs))
+
+      // Archivo
+      Array.from(files).forEach((file) => {
+        datosParaAPI.append("attachment", file);
+      });
 
       console.log('📝 Datos a enviar:', JSON.stringify(datosParaAPI, null, 2))
       console.log('🔍 Verificación de campos críticos:')
@@ -661,6 +672,7 @@ export default function CrearTareas() {
                   value={formData.nombreCliente}
                   onChange={handleChange}
                   placeholder="Ej: Multiagros SRL"
+                  required
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -955,6 +967,7 @@ export default function CrearTareas() {
                   value={formData.asignar}
                   onChange={handleChange}
                   disabled={cargandoTecnicos}
+                  required
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 >
                   <option value="">
@@ -1323,7 +1336,7 @@ export default function CrearTareas() {
                 </div>
               </div>
 
-              <div className="md:col-span-1">
+              <div className="space-y-6">
                 <label className="block font-semibold mb-2 text-gray-700">📝 Resumen contratado</label>
                 <textarea 
                   name="resumenContratado"
@@ -1333,6 +1346,23 @@ export default function CrearTareas() {
                   placeholder="Detalle completo de los servicios contratados..."
                   className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
+
+                <div>
+                  <label className="block font-semibold mb-2 text-gray-700">
+                    📎 Archivo adjunto
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      accept=".pdf"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Solo un archivo permitido (PDF)
+                  </p>
+                </div>
               </div>
             </div>
           </div>
