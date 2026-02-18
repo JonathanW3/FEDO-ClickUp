@@ -60,6 +60,10 @@ export default function CrearTareas() {
     setFiles(e.target.files);
   };
 
+  // Estado para validación de emails en el campo emailTecnico
+  const [emailTecnicoValid, setEmailTecnicoValid] = useState(true)
+  const [emailTecnicoError, setEmailTecnicoError] = useState('')
+
   // Estado para notificaciones profesionales
   const [notificacion, setNotificacion] = useState({
     mostrar: false,
@@ -266,6 +270,13 @@ export default function CrearTareas() {
       [name]: value
     }))
 
+    // Validar emails ingresados en el campo emailTecnico
+    if (name === 'emailTecnico') {
+      const esValido = validarCorrreo(value)
+      setEmailTecnicoValid(esValido)
+      setEmailTecnicoError(esValido ? '' : 'Hay uno o más correos inválidos.')
+    }
+
     // Actualizar emails y direcciones de todos los NRCs cuando cambien los campos principales
     if (name === 'emailTecnico' || name === 'direccionFisica') {
       const nuevosNrcs = [...nrcs]
@@ -417,10 +428,31 @@ export default function CrearTareas() {
         .filter(key => requisitos[key] === true)
         .map(key => textoRequisitos[key])
 
-      // Preparar los datos para enviar con el formato solicitado
+      // Limpiar y normalizar el campo emailTecnico para enviar con el formato solicitado
+      const formDataToSend = { ...formData }
+      if (formDataToSend.emailTecnico && formDataToSend.emailTecnico.trim() !== '') {
+        const cleaned = formDataToSend.emailTecnico
+          .replace(/[\n\r]+/g, ',')
+          .replace(/[\/;]+/g, ',')
+          .split(',')
+          .map(e => e.trim())
+          .filter(Boolean)
+          .join(',')
+        formDataToSend.emailTecnico = cleaned
+      } else {
+        formDataToSend.emailTecnico = ''
+      }
+
+      // Validar nuevamente antes de armar FormData
+      if (!validarCorrreo(formDataToSend.emailTecnico)) {
+        mostrarNotificacion('error', 'Correo(s) inválido(s)', 'Por favor corrija los correos en el campo Email Contacto antes de continuar.')
+        setMostrarConfirmacion(false)
+        return
+      }
+
       const datosParaAPI = new FormData()
 
-      Object.entries(formData).forEach(([key, value]) => {
+      Object.entries(formDataToSend).forEach(([key, value]) => {
         datosParaAPI.append(key, value ?? '')
       })
 
@@ -648,9 +680,28 @@ export default function CrearTareas() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    // Bloquear envío si los correos técnicos no son válidos
+    if (!emailTecnicoValid) {
+      mostrarNotificacion('error', 'Correo(s) inválido(s)', 'Por favor corrija los correos en el campo Email Contacto antes de continuar.')
+      return
+    }
+
     confirmarGuardarTarea()
   }
 
+  const validarCorrreo = (input) => {
+    // Permitir campo vacío (no hay correos que validar)
+    if (!input || input.trim() === '') return true
+
+    // Normalizar separadores a comas y dividir
+    const cleaned = input.replace(/[\n\r]+/g, ',').replace(/[\/;]+/g, ',')
+    const emails = cleaned.split(',').map(e => e.trim()).filter(Boolean)
+
+    // Regex simple para validar formato básico de email
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emails.length > 0 && emails.every(email => re.test(email))
+  }
+  
   return (
     <div className="p-6">
       <div className="bg-white rounded-xl shadow-lg p-8">
@@ -822,13 +873,17 @@ export default function CrearTareas() {
               <div>
                 <label className="block font-semibold mb-2 text-gray-700">Email Contacto</label>
                 <input 
-                  type="email" 
+                  // type="email" 
+                  type="text"
                   name="emailTecnico"
                   value={formData.emailTecnico}
                   onChange={handleChange}
                   placeholder="Ej: yenni.bautista@empresa.com"
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
+                {!emailTecnicoValid && (
+                  <p className="text-sm text-red-600 mt-2">{emailTecnicoError}</p>
+                )}
               </div>
 
               <div>
@@ -1527,7 +1582,9 @@ export default function CrearTareas() {
           <div className="text-center mt-8">
             <button 
               type="submit" 
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-12 py-4 rounded-xl transition-all font-semibold text-lg shadow-lg"
+              disabled={!emailTecnicoValid}
+              className={`px-12 py-4 rounded-xl transition-all font-semibold text-lg shadow-lg ${emailTecnicoValid ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+              title={!emailTecnicoValid ? 'Corrija los correos inválidos para poder guardar' : 'Guardar registro'}
             >
               💾 Guardar Registro
             </button>
