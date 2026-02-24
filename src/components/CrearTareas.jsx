@@ -829,11 +829,11 @@ export default function CrearTareas() {
               <div>
                 <label className="block font-semibold mb-2 text-gray-700">Procesamiento anual</label>
                 <input 
-                  type="text" 
+                  type="number" 
                   name="procesamientoAnual"
                   value={formData.procesamientoAnual}
                   onChange={handleChange}
-                  placeholder="Ej: 50,000 documentos"
+                  placeholder="Ej: 50.000"
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
