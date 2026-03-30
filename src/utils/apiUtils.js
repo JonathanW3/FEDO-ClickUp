@@ -48,9 +48,10 @@ export async function callN8NAPI(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, mergedOptions);
+    const result = await response.json();
 
     if (!response.ok) {
-      const errorText = await response.text();
+      const errorText = await result.message;
       throw new Error(`Error HTTP ${response.status}: ${errorText}`);
     }
 
@@ -252,12 +253,13 @@ export async function crearTarea(datosTarea) {
   console.log('📦 Payload completo:', datosTarea)
   
   try {
-    const response = await callN8NAPI('c49681de-ed44-4032-a426-ebe3c911a030', {
+    // const response = await callN8NAPI('c49681de-ed44-4032-a426-ebe3c911a030', {
+    const response = await callN8NAPI('pruebas', {
       method: 'POST',
       body: datosTarea
     })
-    
-    console.log('✅ Tarea creada exitosamente:', response)
+
+    console.log('✅ Tarea creada exitosamente:', result)
     return response
   } catch (error) {
     console.error('❌ Error detallado al crear tarea:')
