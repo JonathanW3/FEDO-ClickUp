@@ -495,6 +495,7 @@ export default function CrearTareas() {
       
     } catch (error) {
       console.error('❌ Error al crear tarea:', error)
+      setMostrarConfirmacion(false)
       mostrarNotificacion('error', 'Error al crear tarea', 
         `No se pudo crear la tarea: ${error.message || 'Error de conexión'}`)
     }
@@ -1022,7 +1023,7 @@ export default function CrearTareas() {
                   value={formData.asignar}
                   onChange={handleChange}
                   disabled={cargandoTecnicos}
-                  required
+                  // required
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 >
                   <option value="">
