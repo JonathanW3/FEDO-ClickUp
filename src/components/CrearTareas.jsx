@@ -879,7 +879,7 @@ export default function CrearTareas() {
                   name="emailTecnico"
                   value={formData.emailTecnico}
                   onChange={handleChange}
-                  placeholder="Ej: yenni.bautista@empresa.com"
+                  placeholder="Ej: yenni.bautista@empresa.com, lballadares@empresa.com"
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
                 {!emailTecnicoValid && (
@@ -1023,7 +1023,7 @@ export default function CrearTareas() {
                   value={formData.asignar}
                   onChange={handleChange}
                   disabled={cargandoTecnicos}
-                  // required
+                  required
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 >
                   <option value="">
