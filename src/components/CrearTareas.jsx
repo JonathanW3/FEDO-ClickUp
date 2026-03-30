@@ -495,6 +495,7 @@ export default function CrearTareas() {
       
     } catch (error) {
       console.error('❌ Error al crear tarea:', error)
+      setMostrarConfirmacion(false)
       mostrarNotificacion('error', 'Error al crear tarea', 
         `No se pudo crear la tarea: ${error.message || 'Error de conexión'}`)
     }
@@ -829,11 +830,11 @@ export default function CrearTareas() {
               <div>
                 <label className="block font-semibold mb-2 text-gray-700">Procesamiento anual</label>
                 <input 
-                  type="text" 
+                  type="number" 
                   name="procesamientoAnual"
                   value={formData.procesamientoAnual}
                   onChange={handleChange}
-                  placeholder="Ej: 50,000 documentos"
+                  placeholder="Ej: 50.000"
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -878,7 +879,7 @@ export default function CrearTareas() {
                   name="emailTecnico"
                   value={formData.emailTecnico}
                   onChange={handleChange}
-                  placeholder="Ej: yenni.bautista@empresa.com"
+                  placeholder="Ej: yenni.bautista@empresa.com, lballadares@empresa.com"
                   className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
                 {!emailTecnicoValid && (
