@@ -58,7 +58,7 @@ export default function Personal(){
     accesoPortal: false,
     cedula: ''
   })
-  const [editIndex, setEditIndex] = useState(-1)
+  const [editingMiembroID, setEditingMiembroID] = useState(null)
 
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1)
@@ -340,11 +340,11 @@ export default function Personal(){
       accesoPortal: false,
       cedula: ''
     })
-    setEditIndex(-1)
+    setEditingMiembroID(null)
   }
 
   function saveRow(){
-    if(editIndex >= 0){
+    if(editingMiembroID){
       // Editando registro existente - consumir API
       editarPersonalExistente()
     } else {
@@ -362,15 +362,15 @@ export default function Personal(){
       console.log('📝 Datos del formulario para editar:', form)
       console.log('🔄 Datos formateados para API de edición:', datosAPI)
 
-      // Obtener el ID del miembro a editar
-      const miembroId = rows[editIndex].miembroID || rows[editIndex].id
+      // Usar el ID seleccionado en lugar de índice
+      const miembroId = editingMiembroID
 
       // Usar función utilitaria para actualizar miembro
       const responseData = await actualizarMiembro(miembroId, datosAPI)
 
       // Actualizar en el estado local
-      setRows(r => r.map((x,i)=> i===editIndex ? {
-        ...form, 
+      setRows(r => r.map((x)=> x.miembroID === miembroId ? {
+        ...form,
         id: x.id,
         miembroID: x.miembroID,
         // Mapear para la tabla local
@@ -505,9 +505,15 @@ export default function Personal(){
     setRows(r => r.filter((_,idx)=> idx!==i))
   }
 
-  function startEdit(i){
-    setEditIndex(i)
-    setForm({...rows[i]})
+  function startEdit(miembroId){
+    setEditingMiembroID(miembroId)
+    const persona = rows.find(r => r.miembroID === miembroId || r.id === miembroId)
+    if (persona) {
+      setForm({
+        ...persona,
+        tipos: Array.isArray(persona.tipos) ? persona.tipos : (typeof persona.tipos === 'string' ? persona.tipos.split(',').map(t => t.trim()).filter(Boolean) : []),
+      })
+    }
     setModal('edit')
   }
 
@@ -853,7 +859,7 @@ export default function Personal(){
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
                         <button 
-                          onClick={() => startEdit(indicePrimero + i)}
+                          onClick={() => startEdit(row.miembroID || row.id)}
                           className="text-blue-600 hover:text-blue-800 font-medium"
                         >
                           Editar
