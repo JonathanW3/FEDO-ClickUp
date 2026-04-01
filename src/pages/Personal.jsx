@@ -253,7 +253,6 @@ export default function Personal(){
       const data = await obtenerMiembros()
       
       console.log('📊 Estructura de datos recibida de la API:', data)
-      console.log('📊 Primer elemento de los datos:', data[0])
       
       // Transformar datos de la API al formato esperado por el componente
       const personalTransformado = data.map(item => {
@@ -283,7 +282,17 @@ export default function Personal(){
               return [];
             }
           })(),
-          activo: miembroData.estado === 'Activo' || miembroData.activo !== false,
+          // Priorizar el estado que viene de la API (string 'Activo'/'Inactivo' o campo booleano)
+          activo: (() => {
+            if (typeof miembroData.estado === 'string') {
+              return miembroData.estado.trim().toLowerCase() === 'activo';
+            }
+            if (typeof miembroData.activo === 'boolean') {
+              return miembroData.activo;
+            }
+            // Si no hay dato, asume inactivo para evitar falsas positivas
+            return false;
+          })(),
           // Campos adicionales para compatibilidad con la tabla
           personal: miembroData.nombre || miembroData.personal || 'N/A',
           contacto: miembroData.celular?.toString() || miembroData.contacto?.toString() || 'N/A'
@@ -566,18 +575,6 @@ export default function Personal(){
 
   const irPaginaSiguiente = () => {
     if (paginaActual < totalPaginas) cambiarPagina(paginaActual + 1)
-  }
-
-  // Mostrar loading mientras se verifica la autenticación
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verificando acceso...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
