@@ -10,7 +10,7 @@ function Modal({open, onClose, title, children}){
   if(!open) return null
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-90vh overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-gray-800">{title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -54,7 +54,9 @@ export default function Personal(){
     telefono: '',
     prioridad: 'Media',
     tipos: [],
-    activo: true
+    activo: true,
+    accesoPortal: false,
+    cedula: ''
   })
   const [editIndex, setEditIndex] = useState(-1)
 
@@ -295,7 +297,9 @@ export default function Personal(){
           })(),
           // Campos adicionales para compatibilidad con la tabla
           personal: miembroData.nombre || miembroData.personal || 'N/A',
-          contacto: miembroData.celular?.toString() || miembroData.contacto?.toString() || 'N/A'
+          contacto: miembroData.celular?.toString() || miembroData.contacto?.toString() || 'N/A',
+          accesoPortal: miembroData.accesoPortal ?? false,
+          cedula: miembroData.cedula || ''
         };
       })
       
@@ -332,7 +336,9 @@ export default function Personal(){
       telefono: '',
       prioridad: 'Media',
       tipos: [],
-      activo: true
+      activo: true,
+      accesoPortal: false,
+      cedula: ''
     })
     setEditIndex(-1)
   }
@@ -370,7 +376,9 @@ export default function Personal(){
         // Mapear para la tabla local
         personal: form.nombre,
         contacto: form.telefono,
-        tipos: form.tipos.join(', ')
+        tipos: form.tipos.join(', '),
+        accesoPortal: form.accesoPortal,
+        cedula: form.accesoPortal ? form.cedula : '',
       } : x))
       
       setModal(null)
@@ -407,13 +415,15 @@ export default function Personal(){
       // Agregar al estado local con un ID temporal
       const newId = Math.max(...rows.map(r => r.id || 0), 0) + 1
       const nuevoPersonal = {
-        ...form, 
+        ...form,
         id: newId,
         miembroID: responseData.id || newId, // Usar ID de la respuesta si está disponible
         // Mapear para la tabla local
         personal: form.nombre,
         contacto: form.telefono,
-        tipos: form.tipos.join(', ')
+        tipos: form.tipos.join(', '),
+        accesoPortal: form.accesoPortal,
+        cedula: form.accesoPortal ? form.cedula : ''
       }
       
       setRows(r => [...r, nuevoPersonal])
@@ -426,7 +436,9 @@ export default function Personal(){
         telefono: '',
         prioridad: 'Media',
         tipos: [],
-        activo: true
+        activo: true,
+        accesoPortal: false,
+        cedula: ''
       })
       
       // Mostrar notificación de éxito profesional
@@ -447,7 +459,7 @@ export default function Personal(){
       }, 500)
       
     } catch (error) {
-      console.error('Error al crear personal:', error)
+      console.error('Error al crear nuevo usuario:', error)
       
       // Mostrar notificación de error profesional
       showError(
@@ -471,6 +483,8 @@ export default function Personal(){
             personal: form.nombre,
             contacto: form.telefono,
             tipos: form.tipos.join(', '),
+            accesoPortal: form.accesoPortal,
+            cedula: form.accesoPortal ? form.cedula : '',
             esBorrador: true // Marcar como borrador local
           }
           setRows(r => [...r, nuevoPersonal])
@@ -524,6 +538,17 @@ export default function Personal(){
       default: return 'text-gray-700 bg-gray-100'
     }
   }
+
+  const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+  const telefonoValido = /^\d{3}-\d{3}-\d{4}$/.test(form.telefono.trim())
+  const cedulaValida = !form.accesoPortal || (form.cedula.trim().length > 0 && /^\d{1,11}$/.test(form.cedula.trim()))
+  const camposRequeridosCompletos =
+    form.nombre.trim().length > 0 &&
+    emailValido &&
+    telefonoValido &&
+    form.tipos.length > 0 &&
+    cedulaValida
+  const canSubmit = !saving && camposRequeridosCompletos
 
   // Aplicar filtros a los datos
   const rowsFiltrados = rows.filter(row => {
@@ -775,6 +800,7 @@ export default function Personal(){
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Personal</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contacto</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cédula</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioridad</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipos</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
@@ -799,6 +825,9 @@ export default function Personal(){
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{row.telefono}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{row.cedula || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getPrioridadColor(row.prioridad)}`}>
@@ -988,129 +1017,167 @@ export default function Personal(){
         onClose={() => setModal(null)} 
         title={modal === 'edit' ? 'Editar Personal' : 'Agregar Personal'}
       >
-        <form onSubmit={(e) => { e.preventDefault(); saveRow(); }} className="space-y-6">
-          {/* Información Personal */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Información Personal</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre Completo {modal === 'edit' && <span className="text-gray-400">(Solo lectura)</span>}
-                </label>
-                <input
-                  type="text"
-                  value={form.nombre}
-                  onChange={(e) => setForm(f => ({...f, nombre: e.target.value}))}
-                  readOnly={modal === 'edit'}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
-                  }`}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email {modal === 'edit' && <span className="text-gray-400">(Solo lectura)</span>}
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm(f => ({...f, email: e.target.value}))}
-                  readOnly={modal === 'edit'}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
-                  }`}
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Información de Contacto */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Información de Contacto</h4>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Teléfono <span className="text-green-600">(Editable)</span>
-              </label>
-              <input
-                type="tel"
-                value={form.telefono}
-                onChange={(e) => setForm(f => ({...f, telefono: e.target.value}))}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                placeholder="809-555-0123"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Configuración */}
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Configuración</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Prioridad */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
-                <select
-                  value={form.prioridad}
-                  onChange={(e) => setForm(f => ({...f, prioridad: e.target.value}))}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  {prioridadesDisponibles.map(prioridad => (
-                    <option key={prioridad} value={prioridad}>{prioridad}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Estado */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="activo"
-                      checked={form.activo}
-                      onChange={() => setForm(f => ({...f, activo: true}))}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Activo</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="activo"
-                      checked={!form.activo}
-                      onChange={() => setForm(f => ({...f, activo: false}))}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Inactivo</span>
-                  </label>
+        <form onSubmit={(e) => { e.preventDefault(); saveRow(); }} className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Información Personal */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Información Personal</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                  <input
+                    type="text"
+                    value={form.nombre}
+                    onChange={(e) => setForm(f => ({...f, nombre: e.target.value}))}
+                    readOnly={modal === 'edit'}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
+                    }`}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm(f => ({...f, email: e.target.value}))}
+                    readOnly={modal === 'edit'}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
+                    }`}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                  <input
+                    type="tel"
+                    value={form.telefono}
+                    onChange={(e) => {
+                      const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                      const formatted = onlyDigits
+                        .replace(/(\d{3})(\d{1,3})?(\d{1,4})?/, (_, a, b, c) => {
+                          let result = a
+                          if (b) result += `-${b}`
+                          if (c) result += `-${c}`
+                          return result
+                        })
+                      setForm(f => ({ ...f, telefono: formatted }))
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    placeholder="000-000-0000"
+                    maxLength={12}
+                    inputMode="numeric"
+                    pattern="\d{3}-\d{3}-\d{4}"
+                    title="Formato: 000-000-0000"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Solo números; máximo 10 dígitos. Se aplicará formato 000-000-0000 automáticamente.</p>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Tipos (Multi-select) */}
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Tipos de Personal</h4>
-            <p className="text-sm text-gray-600 mb-3">Selecciona uno o más tipos (puede tener múltiples roles)</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {tiposDisponibles.map(tipo => (
-                <label key={tipo} className="flex items-center p-3 border rounded-lg hover:bg-white cursor-pointer transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={form.tipos.includes(tipo)}
-                    onChange={() => toggleTipo(tipo)}
-                    className="text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-3 text-sm font-medium text-gray-700">{tipo}</span>
-                </label>
-              ))}
+            {/* Configuración */}
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Configuración</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
+                  <select
+                    value={form.prioridad}
+                    onChange={(e) => setForm(f => ({...f, prioridad: e.target.value}))}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    {prioridadesDisponibles.map(prioridad => (
+                      <option key={prioridad} value={prioridad}>{prioridad}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="activo"
+                        checked={form.activo}
+                        onChange={() => setForm(f => ({...f, activo: true}))}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Activo</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="activo"
+                        checked={!form.activo}
+                        onChange={() => setForm(f => ({...f, activo: false}))}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Inactivo</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">Dar acceso al portal</label>
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, accesoPortal: !f.accesoPortal }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.accesoPortal ? 'bg-green-500' : 'bg-gray-300'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.accesoPortal ? 'translate-x-5' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+
+                  {form.accesoPortal && (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cédula</label>
+                      <input
+                        type="text"
+                        value={form.cedula}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '')
+                          setForm(f => ({ ...f, cedula: value.slice(0, 11) }))
+                        }}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        placeholder="12345678901"
+                        maxLength={11}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        required={form.accesoPortal}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Máximo 11 dígitos (solo números).</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            {form.tipos.length === 0 && (
-              <p className="text-red-500 text-sm mt-2">Debe seleccionar al menos un tipo</p>
-            )}
+
+            {/* Tipos (Multi-select) */}
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Tipos de Personal</h4>
+              <p className="text-sm text-gray-600 mb-3">Selecciona uno o más tipos (puede tener múltiples roles)</p>
+              <div className="flex flex-wrap gap-3">
+                {tiposDisponibles.map(tipo => (
+                  <label key={tipo} className="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-white cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={form.tipos.includes(tipo)}
+                      onChange={() => toggleTipo(tipo)}
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">{tipo}</span>
+                  </label>
+                ))}
+              </div>
+              {form.tipos.length === 0 && (
+                <p className="text-red-500 text-sm mt-2">Debe seleccionar al menos un tipo</p>
+              )}
+            </div>
           </div>
 
           {/* Buttons */}
@@ -1125,8 +1192,8 @@ export default function Personal(){
             </button>
             <button
               type="submit"
-              disabled={form.tipos.length === 0 || saving}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              disabled={!canSubmit}
+              className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${canSubmit ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}
             >
               {saving && (
                 <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -1136,7 +1203,7 @@ export default function Personal(){
               )}
               {saving 
                 ? 'Guardando...' 
-                : (modal === 'edit' ? 'Guardar Cambios' : 'Crear Personal')
+                : (modal === 'edit' ? 'Guardar Cambios' : 'Registrar Usuario')
               }
             </button>
           </div>

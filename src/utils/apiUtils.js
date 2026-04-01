@@ -299,7 +299,7 @@ export async function crearTarea(datosTarea) {
 // Función para endpoints futuros (ejemplo)
 export async function actualizarMiembro(id, datosPersonal) {
   const payload = {
-    "Table": "MiembroNU",
+    "Table": "MiembroMod",
     "Type": "SQl",
     "Data": {
       ...datosPersonal,
@@ -345,6 +345,8 @@ export function formatearDatosParaAPI(formData) {
     celular: formData.telefono,
     prioridad: formData.prioridad,
     id_clickup: null,
-    tipos: convertirTiposANumeros(formData.tipos)
+    tipos: convertirTiposANumeros(formData.tipos),
+    accesoPortal: Boolean(formData.accesoPortal),
+    cedula: formData.accesoPortal ? formData.cedula : ''
   };
 }
