@@ -59,6 +59,7 @@ export default function Personal(){
     cedula: ''
   })
   const [editingMiembroID, setEditingMiembroID] = useState(null)
+  const [deleteCandidateId, setDeleteCandidateId] = useState(null)
 
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1)
@@ -501,8 +502,19 @@ export default function Personal(){
     }
   }
 
-  function removeRow(i){
-    setRows(r => r.filter((_,idx)=> idx!==i))
+  function removeRowById(miembroId){
+    setRows(r => r.filter(x => x.miembroID !== miembroId && x.id !== miembroId))
+    setDeleteCandidateId(null)
+    showSuccess('Registro de personal eliminado correctamente.', 3500)
+  }
+
+  function confirmDelete(){
+    if (!deleteCandidateId) return
+    removeRowById(deleteCandidateId)
+  }
+
+  function cancelDelete(){
+    setDeleteCandidateId(null)
   }
 
   function startEdit(miembroId){
@@ -865,7 +877,7 @@ export default function Personal(){
                           Editar
                         </button>
                         <button 
-                          onClick={() => removeRow(indicePrimero + i)}
+                          onClick={() => setDeleteCandidateId(row.miembroID || row.id)}
                           className="text-red-600 hover:text-red-800 font-medium"
                         >
                           Eliminar
@@ -1214,6 +1226,31 @@ export default function Personal(){
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Confirmación de eliminación via popup */}
+      <Modal
+        open={!!deleteCandidateId}
+        onClose={cancelDelete}
+        title="Confirmar eliminación"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">¿Estás seguro de que deseas eliminar este personal? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-2 pt-3 border-t border-gray-200">
+            <button
+              onClick={cancelDelete}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+            >
+              Eliminar
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* Toast Notifications */}
