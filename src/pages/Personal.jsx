@@ -106,15 +106,23 @@ export default function Personal(){
 
   // Función para cargar datos de ejemplo
   function cargarDatosEjemplo() {
-    const personalTransformado = datosEjemplo.map(item => ({
-      id: item.miembroID,
-      nombre: item.personal,
-      email: item.email,
-      telefono: item.contacto?.toString() || '',
-      prioridad: item.prioridad || 'Media',
-      tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
-      activo: item.estado === 'Activo'
-    }))
+    const personalTransformado = datosEjemplo.map(item => {
+      // Determinar acceso al portal basado en la cédula (simulando que no hay cédula en ejemplo)
+      const cedulaActual = ''; // Los datos de ejemplo no tienen cédula
+      const tieneAccesoPortal = false; // Por defecto no tienen acceso
+      
+      return {
+        id: item.miembroID,
+        nombre: item.personal,
+        email: item.email,
+        telefono: item.contacto?.toString() || '',
+        prioridad: item.prioridad || 'Media',
+        tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
+        activo: item.estado === 'Activo',
+        accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+        cedula: cedulaActual
+      }
+    })
     
     setRows(personalTransformado)
     setError(null)
@@ -221,15 +229,26 @@ export default function Personal(){
           
           // Si funciona, actualizar automáticamente
           if (Array.isArray(data)) {
-            const personalTransformado = data.map(item => ({
-              id: item.miembroID,
-              nombre: item.personal || 'N/A',
-              email: item.email || 'N/A',
-              telefono: item.contacto?.toString() || 'N/A',
-              prioridad: item.prioridad || 'Media',
-              tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
-              activo: item.estado === 'Activo'
-            }))
+            const personalTransformado = data.map(item => {
+              // Determinar acceso al portal basado en la cédula
+              const cedulaActual = item.cedula || '';
+              const tieneAccesoPortal = cedulaActual && 
+                                       cedulaActual.trim() !== '' && 
+                                       cedulaActual.trim() !== 'no proporcionado' &&
+                                       cedulaActual.trim() !== '0';
+              
+              return {
+                id: item.miembroID,
+                nombre: item.personal || 'N/A',
+                email: item.email || 'N/A',
+                telefono: item.contacto?.toString() || 'N/A',
+                prioridad: item.prioridad || 'Media',
+                tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
+                activo: item.estado === 'Activo',
+                accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+                cedula: cedulaActual
+              }
+            })
             setRows(personalTransformado)
             setError(null)
             console.log('✅ Datos cargados automáticamente en la tabla')
@@ -296,11 +315,18 @@ export default function Personal(){
             // Si no hay dato, asume inactivo para evitar falsas positivas
             return false;
           })(),
+          // Determinar acceso al portal basado en la cédula
+          accesoPortal: (() => {
+            const cedulaActual = miembroData.cedula || '';
+            return cedulaActual && 
+                   cedulaActual.trim() !== '' && 
+                   cedulaActual.trim() !== 'no proporcionado' &&
+                   cedulaActual.trim() !== '0';
+          })(),
+          cedula: miembroData.cedula || '',
           // Campos adicionales para compatibilidad con la tabla
           personal: miembroData.nombre || miembroData.personal || 'N/A',
-          contacto: miembroData.celular?.toString() || miembroData.contacto?.toString() || 'N/A',
-          accesoPortal: miembroData.accesoPortal ?? false,
-          cedula: miembroData.cedula || ''
+          contacto: miembroData.celular?.toString() || miembroData.contacto?.toString() || 'N/A'
         };
       })
       
@@ -369,24 +395,83 @@ export default function Personal(){
       // Usar función utilitaria para actualizar miembro
       const responseData = await actualizarMiembro(miembroId, datosAPI)
 
-      // Actualizar en el estado local
-      setRows(r => r.map((x)=> x.miembroID === miembroId ? {
-        ...form,
-        id: x.id,
-        miembroID: x.miembroID,
-        // Mapear para la tabla local
-        personal: form.nombre,
-        contacto: form.telefono,
-        tipos: form.tipos.join(', '),
-        accesoPortal: form.accesoPortal,
-        cedula: form.accesoPortal ? form.cedula : '',
-      } : x))
+      console.log('📊 Respuesta de la API al actualizar:', responseData)
+
+      // Transformar la respuesta de la API al formato de la tabla
+      let personaActualizada;
+      
+      if (Array.isArray(responseData) && responseData.length > 0) {
+        // Si la API devuelve un array, usar el primer elemento
+        const miembroData = responseData[0].crear_o_actualizar_miembro_json || responseData[0];
+        
+        console.log('🔍 Datos específicos del miembro actualizado:', {
+          accesoPortal: miembroData.accesoPortal,
+          cedula: miembroData.cedula,
+          todosLosCampos: Object.keys(miembroData)
+        });
+        
+        // Determinar acceso al portal basado en la cédula (ya que no se guarda en DB)
+        const cedulaGuardada = miembroData.cedula || (form.accesoPortal ? form.cedula : '');
+        const tieneAccesoPortal = cedulaGuardada && 
+                                 cedulaGuardada.trim() !== '' && 
+                                 cedulaGuardada.trim() !== 'no proporcionado' &&
+                                 cedulaGuardada.trim() !== '0';
+        
+        personaActualizada = {
+          id: miembroId,
+          miembroID: miembroId,
+          nombre: miembroData.nombre || form.nombre,
+          email: miembroData.email || form.email,
+          telefono: miembroData.celular?.toString() || form.telefono,
+          prioridad: miembroData.prioridad || form.prioridad,
+          tipos: Array.isArray(miembroData.tipos) 
+            ? miembroData.tipos.map(tipoNum => {
+                const tipoTexto = Object.keys(TIPOS_PERSONAL).find(key => TIPOS_PERSONAL[key] === tipoNum);
+                return tipoTexto || `Tipo ${tipoNum}`;
+              })
+            : (typeof miembroData.tipos === 'string' 
+                ? miembroData.tipos.split(', ').map(t => t.trim()).filter(Boolean)
+                : form.tipos),
+          activo: typeof miembroData.estado === 'string' 
+            ? miembroData.estado.trim().toLowerCase() === 'activo'
+            : miembroData.activo ?? form.activo,
+          personal: miembroData.nombre || form.nombre,
+          contacto: miembroData.celular?.toString() || form.telefono,
+          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+          cedula: cedulaGuardada
+        };
+      } else {
+        // Si no hay respuesta estructurada, usar los datos del formulario
+        const cedulaGuardada = form.accesoPortal ? form.cedula : '';
+        const tieneAccesoPortal = cedulaGuardada && 
+                                 cedulaGuardada.trim() !== '' && 
+                                 cedulaGuardada.trim() !== 'no proporcionado' &&
+                                 cedulaGuardada.trim() !== '0';
+        
+        personaActualizada = {
+          id: miembroId,
+          miembroID: miembroId,
+          nombre: form.nombre,
+          email: form.email,
+          telefono: form.telefono,
+          prioridad: form.prioridad,
+          tipos: form.tipos,
+          activo: form.activo,
+          personal: form.nombre,
+          contacto: form.telefono,
+          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+          cedula: cedulaGuardada
+        };
+      }
+
+      // Actualizar en el estado local con los datos transformados
+      setRows(r => r.map((x) => x.miembroID === miembroId ? personaActualizada : x))
       
       setModal(null)
       
-      // Mostrar notificación de éxito profesional
+      // Mostrar notificación de éxito
       showSuccess(
-        `✅ ${form.nombre} ha sido actualizado exitosamente. Los cambios se han guardado en el sistema.`,
+        `✅ ${personaActualizada.nombre} ha sido actualizado exitosamente. Los cambios se han guardado en el sistema.`,
         5000
       )
       
@@ -413,18 +498,69 @@ export default function Personal(){
       // Usar función utilitaria para crear miembro
       const responseData = await crearMiembro(datosAPI)
 
-      // Agregar al estado local con un ID temporal
+      console.log('📊 Respuesta de la API al crear:', responseData)
+
+      // Extraer ID y transformar datos de respuesta
+      let nuevoPersonal;
       const newId = Math.max(...rows.map(r => r.id || 0), 0) + 1
-      const nuevoPersonal = {
-        ...form,
-        id: newId,
-        miembroID: responseData.id || newId, // Usar ID de la respuesta si está disponible
-        // Mapear para la tabla local
-        personal: form.nombre,
-        contacto: form.telefono,
-        tipos: form.tipos.join(', '),
-        accesoPortal: form.accesoPortal,
-        cedula: form.accesoPortal ? form.cedula : ''
+
+      if (Array.isArray(responseData) && responseData.length > 0) {
+        // Si la API devuelve un array, usar el primer elemento
+        const miembroData = responseData[0].crear_o_actualizar_miembro_json || responseData[0];
+        const miembroID = miembroData.miembroID || newId;
+
+        // Determinar acceso al portal basado en la cédula
+        const cedulaGuardada = miembroData.cedula || (form.accesoPortal ? form.cedula : '');
+        const tieneAccesoPortal = cedulaGuardada && 
+                                 cedulaGuardada.trim() !== '' && 
+                                 cedulaGuardada.trim() !== 'no proporcionado' &&
+                                 cedulaGuardada.trim() !== '0';
+
+        nuevoPersonal = {
+          id: miembroID,
+          miembroID: miembroID,
+          nombre: miembroData.nombre || form.nombre,
+          email: miembroData.email || form.email,
+          telefono: miembroData.celular?.toString() || form.telefono,
+          prioridad: miembroData.prioridad || form.prioridad,
+          tipos: Array.isArray(miembroData.tipos)
+            ? miembroData.tipos.map(tipoNum => {
+                const tipoTexto = Object.keys(TIPOS_PERSONAL).find(key => TIPOS_PERSONAL[key] === tipoNum);
+                return tipoTexto || `Tipo ${tipoNum}`;
+              })
+            : (typeof miembroData.tipos === 'string' 
+                ? miembroData.tipos.split(', ').map(t => t.trim()).filter(Boolean)
+                : form.tipos),
+          activo: typeof miembroData.estado === 'string' 
+            ? miembroData.estado.trim().toLowerCase() === 'activo'
+            : (miembroData.activo ?? form.activo),
+          personal: miembroData.nombre || form.nombre,
+          contacto: miembroData.celular?.toString() || form.telefono,
+          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+          cedula: cedulaGuardada
+        };
+      } else {
+        // Si no hay respuesta estructurada, usar los datos del formulario
+        const cedulaGuardada = form.accesoPortal ? form.cedula : '';
+        const tieneAccesoPortal = cedulaGuardada && 
+                                 cedulaGuardada.trim() !== '' && 
+                                 cedulaGuardada.trim() !== 'no proporcionado' &&
+                                 cedulaGuardada.trim() !== '0';
+        
+        nuevoPersonal = {
+          id: newId,
+          miembroID: newId,
+          nombre: form.nombre,
+          email: form.email,
+          telefono: form.telefono,
+          prioridad: form.prioridad,
+          tipos: form.tipos,
+          activo: form.activo,
+          personal: form.nombre,
+          contacto: form.telefono,
+          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+          cedula: cedulaGuardada
+        };
       }
       
       setRows(r => [...r, nuevoPersonal])
@@ -444,7 +580,7 @@ export default function Personal(){
       
       // Mostrar notificación de éxito profesional
       showSuccess(
-        `✅ ${form.nombre} ha sido agregado exitosamente al equipo. El registro está ahora disponible en la tabla.`,
+        `✅ ${nuevoPersonal.nombre} ha sido agregado exitosamente al equipo. El registro está ahora disponible en la tabla.`,
         5000
       )
       
@@ -484,9 +620,8 @@ export default function Personal(){
             personal: form.nombre,
             contacto: form.telefono,
             tipos: form.tipos.join(', '),
-            accesoPortal: form.accesoPortal,
-            cedula: form.accesoPortal ? form.cedula : '',
-            esBorrador: true // Marcar como borrador local
+            accesoPortal: false,
+            cedula: ''
           }
           setRows(r => [...r, nuevoPersonal])
           setModal(null)
@@ -521,9 +656,17 @@ export default function Personal(){
     setEditingMiembroID(miembroId)
     const persona = rows.find(r => r.miembroID === miembroId || r.id === miembroId)
     if (persona) {
+      // Determinar si tiene acceso al portal basado en si tiene cédula válida
+      const tieneCedulaValida = persona.cedula && 
+                               persona.cedula.trim() !== '' && 
+                               persona.cedula.trim() !== 'no proporcionado' &&
+                               persona.cedula.trim() !== '0'
+      
       setForm({
         ...persona,
         tipos: Array.isArray(persona.tipos) ? persona.tipos : (typeof persona.tipos === 'string' ? persona.tipos.split(',').map(t => t.trim()).filter(Boolean) : []),
+        accesoPortal: tieneCedulaValida, // Activar acceso al portal si tiene cédula válida
+        cedula: persona.cedula || '' // Asegurar que la cédula se muestre
       })
     }
     setModal('edit')
@@ -818,6 +961,7 @@ export default function Personal(){
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Personal</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contacto</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Portal</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cédula</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioridad</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipos</th>
@@ -843,6 +987,15 @@ export default function Personal(){
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{row.telefono}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        row.cedula && row.cedula.trim() !== '' && row.cedula.trim() !== 'no proporcionado' && row.cedula.trim() !== '0'
+                          ? 'text-green-700 bg-green-100' 
+                          : 'text-gray-700 bg-gray-100'
+                      }`}>
+                        {row.cedula && row.cedula.trim() !== '' && row.cedula.trim() !== 'no proporcionado' && row.cedula.trim() !== '0' ? 'Sí' : 'No'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{row.cedula || '-'}</div>
@@ -888,7 +1041,7 @@ export default function Personal(){
                 ))}
                 {rowsFiltrados.length === 0 && !loading && (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center">
                         <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           {rows.length === 0 ? (
