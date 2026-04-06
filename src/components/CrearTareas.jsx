@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { crearTarea } from '../utils/apiUtils'
+import { crearTarea, obtenerSistemas } from '../utils/apiUtils'
 import { getUserSession } from '../utils/authUtils'
 
 export default function CrearTareas() {
@@ -35,11 +35,7 @@ export default function CrearTareas() {
     cantidadNrcs: '0'
   })
 
-  // Lista de sistemas disponibles para autocompletado
-  const sistemasDisponibles = [
-    'WebPOSenlaNube v: 1'
-  ]
-
+  const [sistemasDisponibles, setSistemasDisponibles] = useState([])
   const [sistemasSugeridos, setSistemasSugeridos] = useState([])
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
   const [buscandoRnc, setBuscandoRnc] = useState(false)
@@ -86,10 +82,11 @@ export default function CrearTareas() {
       }))
     }
     
-    // Cargar técnicos y distribuidores
+    // Cargar técnicos, distribuidores y sistemas
     obtenerTecnicos()
     obtenerDistribuidores()
     obtenerVendedores()
+    cargarSistemas()
   }, [])
 
   // Efecto para asignar el usuario actual cuando se cargan los técnicos
@@ -239,6 +236,16 @@ export default function CrearTareas() {
       console.error('Error en la consulta de vendedores:', error)
     } finally {
       setCargandoVendedores(false)
+    }
+  }
+
+  const cargarSistemas = async () => {
+    try {
+      const data = await obtenerSistemas()
+      const nombres = data.map(s => s.nombre).filter(Boolean)
+      setSistemasDisponibles(nombres)
+    } catch (error) {
+      console.error('Error al cargar sistemas:', error)
     }
   }
 

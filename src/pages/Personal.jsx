@@ -10,7 +10,7 @@ function Modal({open, onClose, title, children}){
   if(!open) return null
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl max-h-90vh overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-gray-800">{title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -54,9 +54,12 @@ export default function Personal(){
     telefono: '',
     prioridad: 'Media',
     tipos: [],
-    activo: true
+    activo: true,
+    accesoPortal: false,
+    cedula: ''
   })
-  const [editIndex, setEditIndex] = useState(-1)
+  const [editingMiembroID, setEditingMiembroID] = useState(null)
+  const [deleteCandidateId, setDeleteCandidateId] = useState(null)
 
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1)
@@ -103,15 +106,23 @@ export default function Personal(){
 
   // Función para cargar datos de ejemplo
   function cargarDatosEjemplo() {
-    const personalTransformado = datosEjemplo.map(item => ({
-      id: item.miembroID,
-      nombre: item.personal,
-      email: item.email,
-      telefono: item.contacto?.toString() || '',
-      prioridad: item.prioridad || 'Media',
-      tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
-      activo: item.estado === 'Activo'
-    }))
+    const personalTransformado = datosEjemplo.map(item => {
+      // Determinar acceso al portal basado en la cédula (simulando que no hay cédula en ejemplo)
+      const cedulaActual = ''; // Los datos de ejemplo no tienen cédula
+      const tieneAccesoPortal = false; // Por defecto no tienen acceso
+      
+      return {
+        id: item.miembroID,
+        nombre: item.personal,
+        email: item.email,
+        telefono: item.contacto?.toString() || '',
+        prioridad: item.prioridad || 'Media',
+        tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
+        activo: item.estado === 'Activo',
+        accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+        cedula: cedulaActual
+      }
+    })
     
     setRows(personalTransformado)
     setError(null)
@@ -218,15 +229,26 @@ export default function Personal(){
           
           // Si funciona, actualizar automáticamente
           if (Array.isArray(data)) {
-            const personalTransformado = data.map(item => ({
-              id: item.miembroID,
-              nombre: item.personal || 'N/A',
-              email: item.email || 'N/A',
-              telefono: item.contacto?.toString() || 'N/A',
-              prioridad: item.prioridad || 'Media',
-              tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
-              activo: item.estado === 'Activo'
-            }))
+            const personalTransformado = data.map(item => {
+              // Determinar acceso al portal basado en la cédula
+              const cedulaActual = item.cedula || '';
+              const tieneAccesoPortal = cedulaActual && 
+                                       cedulaActual.trim() !== '' && 
+                                       cedulaActual.trim() !== 'no proporcionado' &&
+                                       cedulaActual.trim() !== '0';
+              
+              return {
+                id: item.miembroID,
+                nombre: item.personal || 'N/A',
+                email: item.email || 'N/A',
+                telefono: item.contacto?.toString() || 'N/A',
+                prioridad: item.prioridad || 'Media',
+                tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
+                activo: item.estado === 'Activo',
+                accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+                cedula: cedulaActual
+              }
+            })
             setRows(personalTransformado)
             setError(null)
             console.log('✅ Datos cargados automáticamente en la tabla')
@@ -253,7 +275,6 @@ export default function Personal(){
       const data = await obtenerMiembros()
       
       console.log('📊 Estructura de datos recibida de la API:', data)
-      console.log('📊 Primer elemento de los datos:', data[0])
       
       // Transformar datos de la API al formato esperado por el componente
       const personalTransformado = data.map(item => {
@@ -283,7 +304,26 @@ export default function Personal(){
               return [];
             }
           })(),
-          activo: miembroData.estado === 'Activo' || miembroData.activo !== false,
+          // Priorizar el estado que viene de la API (string 'Activo'/'Inactivo' o campo booleano)
+          activo: (() => {
+            if (typeof miembroData.estado === 'string') {
+              return miembroData.estado.trim().toLowerCase() === 'activo';
+            }
+            if (typeof miembroData.activo === 'boolean') {
+              return miembroData.activo;
+            }
+            // Si no hay dato, asume inactivo para evitar falsas positivas
+            return false;
+          })(),
+          // Determinar acceso al portal basado en la cédula
+          accesoPortal: (() => {
+            const cedulaActual = miembroData.cedula || '';
+            return cedulaActual && 
+                   cedulaActual.trim() !== '' && 
+                   cedulaActual.trim() !== 'no proporcionado' &&
+                   cedulaActual.trim() !== '0';
+          })(),
+          cedula: miembroData.cedula || '',
           // Campos adicionales para compatibilidad con la tabla
           personal: miembroData.nombre || miembroData.personal || 'N/A',
           contacto: miembroData.celular?.toString() || miembroData.contacto?.toString() || 'N/A'
@@ -323,13 +363,15 @@ export default function Personal(){
       telefono: '',
       prioridad: 'Media',
       tipos: [],
-      activo: true
+      activo: true,
+      accesoPortal: false,
+      cedula: ''
     })
-    setEditIndex(-1)
+    setEditingMiembroID(null)
   }
 
   function saveRow(){
-    if(editIndex >= 0){
+    if(editingMiembroID){
       // Editando registro existente - consumir API
       editarPersonalExistente()
     } else {
@@ -347,28 +389,89 @@ export default function Personal(){
       console.log('📝 Datos del formulario para editar:', form)
       console.log('🔄 Datos formateados para API de edición:', datosAPI)
 
-      // Obtener el ID del miembro a editar
-      const miembroId = rows[editIndex].miembroID || rows[editIndex].id
+      // Usar el ID seleccionado en lugar de índice
+      const miembroId = editingMiembroID
 
       // Usar función utilitaria para actualizar miembro
       const responseData = await actualizarMiembro(miembroId, datosAPI)
 
-      // Actualizar en el estado local
-      setRows(r => r.map((x,i)=> i===editIndex ? {
-        ...form, 
-        id: x.id,
-        miembroID: x.miembroID,
-        // Mapear para la tabla local
-        personal: form.nombre,
-        contacto: form.telefono,
-        tipos: form.tipos.join(', ')
-      } : x))
+      console.log('📊 Respuesta de la API al actualizar:', responseData)
+
+      // Transformar la respuesta de la API al formato de la tabla
+      let personaActualizada;
+      
+      if (Array.isArray(responseData) && responseData.length > 0) {
+        // Si la API devuelve un array, usar el primer elemento
+        const miembroData = responseData[0].crear_o_actualizar_miembro_json || responseData[0];
+        
+        console.log('🔍 Datos específicos del miembro actualizado:', {
+          accesoPortal: miembroData.accesoPortal,
+          cedula: miembroData.cedula,
+          todosLosCampos: Object.keys(miembroData)
+        });
+        
+        // Determinar acceso al portal basado en la cédula (ya que no se guarda en DB)
+        const cedulaGuardada = miembroData.cedula || (form.accesoPortal ? form.cedula : '');
+        const tieneAccesoPortal = cedulaGuardada && 
+                                 cedulaGuardada.trim() !== '' && 
+                                 cedulaGuardada.trim() !== 'no proporcionado' &&
+                                 cedulaGuardada.trim() !== '0';
+        
+        personaActualizada = {
+          id: miembroId,
+          miembroID: miembroId,
+          nombre: miembroData.nombre || form.nombre,
+          email: miembroData.email || form.email,
+          telefono: miembroData.celular?.toString() || form.telefono,
+          prioridad: miembroData.prioridad || form.prioridad,
+          tipos: Array.isArray(miembroData.tipos) 
+            ? miembroData.tipos.map(tipoNum => {
+                const tipoTexto = Object.keys(TIPOS_PERSONAL).find(key => TIPOS_PERSONAL[key] === tipoNum);
+                return tipoTexto || `Tipo ${tipoNum}`;
+              })
+            : (typeof miembroData.tipos === 'string' 
+                ? miembroData.tipos.split(', ').map(t => t.trim()).filter(Boolean)
+                : form.tipos),
+          activo: typeof miembroData.estado === 'string' 
+            ? miembroData.estado.trim().toLowerCase() === 'activo'
+            : miembroData.activo ?? form.activo,
+          personal: miembroData.nombre || form.nombre,
+          contacto: miembroData.celular?.toString() || form.telefono,
+          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+          cedula: cedulaGuardada
+        };
+      } else {
+        // Si no hay respuesta estructurada, usar los datos del formulario
+        const cedulaGuardada = form.accesoPortal ? form.cedula : '';
+        const tieneAccesoPortal = cedulaGuardada && 
+                                 cedulaGuardada.trim() !== '' && 
+                                 cedulaGuardada.trim() !== 'no proporcionado' &&
+                                 cedulaGuardada.trim() !== '0';
+        
+        personaActualizada = {
+          id: miembroId,
+          miembroID: miembroId,
+          nombre: form.nombre,
+          email: form.email,
+          telefono: form.telefono,
+          prioridad: form.prioridad,
+          tipos: form.tipos,
+          activo: form.activo,
+          personal: form.nombre,
+          contacto: form.telefono,
+          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+          cedula: cedulaGuardada
+        };
+      }
+
+      // Actualizar en el estado local con los datos transformados
+      setRows(r => r.map((x) => x.miembroID === miembroId ? personaActualizada : x))
       
       setModal(null)
       
-      // Mostrar notificación de éxito profesional
+      // Mostrar notificación de éxito
       showSuccess(
-        `✅ ${form.nombre} ha sido actualizado exitosamente. Los cambios se han guardado en el sistema.`,
+        `✅ ${personaActualizada.nombre} ha sido actualizado exitosamente. Los cambios se han guardado en el sistema.`,
         5000
       )
       
@@ -395,16 +498,69 @@ export default function Personal(){
       // Usar función utilitaria para crear miembro
       const responseData = await crearMiembro(datosAPI)
 
-      // Agregar al estado local con un ID temporal
+      console.log('📊 Respuesta de la API al crear:', responseData)
+
+      // Extraer ID y transformar datos de respuesta
+      let nuevoPersonal;
       const newId = Math.max(...rows.map(r => r.id || 0), 0) + 1
-      const nuevoPersonal = {
-        ...form, 
-        id: newId,
-        miembroID: responseData.id || newId, // Usar ID de la respuesta si está disponible
-        // Mapear para la tabla local
-        personal: form.nombre,
-        contacto: form.telefono,
-        tipos: form.tipos.join(', ')
+
+      if (Array.isArray(responseData) && responseData.length > 0) {
+        // Si la API devuelve un array, usar el primer elemento
+        const miembroData = responseData[0].crear_o_actualizar_miembro_json || responseData[0];
+        const miembroID = miembroData.miembroID || newId;
+
+        // Determinar acceso al portal basado en la cédula
+        const cedulaGuardada = miembroData.cedula || (form.accesoPortal ? form.cedula : '');
+        const tieneAccesoPortal = cedulaGuardada && 
+                                 cedulaGuardada.trim() !== '' && 
+                                 cedulaGuardada.trim() !== 'no proporcionado' &&
+                                 cedulaGuardada.trim() !== '0';
+
+        nuevoPersonal = {
+          id: miembroID,
+          miembroID: miembroID,
+          nombre: miembroData.nombre || form.nombre,
+          email: miembroData.email || form.email,
+          telefono: miembroData.celular?.toString() || form.telefono,
+          prioridad: miembroData.prioridad || form.prioridad,
+          tipos: Array.isArray(miembroData.tipos)
+            ? miembroData.tipos.map(tipoNum => {
+                const tipoTexto = Object.keys(TIPOS_PERSONAL).find(key => TIPOS_PERSONAL[key] === tipoNum);
+                return tipoTexto || `Tipo ${tipoNum}`;
+              })
+            : (typeof miembroData.tipos === 'string' 
+                ? miembroData.tipos.split(', ').map(t => t.trim()).filter(Boolean)
+                : form.tipos),
+          activo: typeof miembroData.estado === 'string' 
+            ? miembroData.estado.trim().toLowerCase() === 'activo'
+            : (miembroData.activo ?? form.activo),
+          personal: miembroData.nombre || form.nombre,
+          contacto: miembroData.celular?.toString() || form.telefono,
+          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+          cedula: cedulaGuardada
+        };
+      } else {
+        // Si no hay respuesta estructurada, usar los datos del formulario
+        const cedulaGuardada = form.accesoPortal ? form.cedula : '';
+        const tieneAccesoPortal = cedulaGuardada && 
+                                 cedulaGuardada.trim() !== '' && 
+                                 cedulaGuardada.trim() !== 'no proporcionado' &&
+                                 cedulaGuardada.trim() !== '0';
+        
+        nuevoPersonal = {
+          id: newId,
+          miembroID: newId,
+          nombre: form.nombre,
+          email: form.email,
+          telefono: form.telefono,
+          prioridad: form.prioridad,
+          tipos: form.tipos,
+          activo: form.activo,
+          personal: form.nombre,
+          contacto: form.telefono,
+          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
+          cedula: cedulaGuardada
+        };
       }
       
       setRows(r => [...r, nuevoPersonal])
@@ -417,12 +573,14 @@ export default function Personal(){
         telefono: '',
         prioridad: 'Media',
         tipos: [],
-        activo: true
+        activo: true,
+        accesoPortal: false,
+        cedula: ''
       })
       
       // Mostrar notificación de éxito profesional
       showSuccess(
-        `✅ ${form.nombre} ha sido agregado exitosamente al equipo. El registro está ahora disponible en la tabla.`,
+        `✅ ${nuevoPersonal.nombre} ha sido agregado exitosamente al equipo. El registro está ahora disponible en la tabla.`,
         5000
       )
       
@@ -438,7 +596,7 @@ export default function Personal(){
       }, 500)
       
     } catch (error) {
-      console.error('Error al crear personal:', error)
+      console.error('Error al crear nuevo usuario:', error)
       
       // Mostrar notificación de error profesional
       showError(
@@ -462,7 +620,8 @@ export default function Personal(){
             personal: form.nombre,
             contacto: form.telefono,
             tipos: form.tipos.join(', '),
-            esBorrador: true // Marcar como borrador local
+            accesoPortal: false,
+            cedula: ''
           }
           setRows(r => [...r, nuevoPersonal])
           setModal(null)
@@ -478,13 +637,38 @@ export default function Personal(){
     }
   }
 
-  function removeRow(i){
-    setRows(r => r.filter((_,idx)=> idx!==i))
+  function removeRowById(miembroId){
+    setRows(r => r.filter(x => x.miembroID !== miembroId && x.id !== miembroId))
+    setDeleteCandidateId(null)
+    showSuccess('Registro de personal eliminado correctamente.', 3500)
   }
 
-  function startEdit(i){
-    setEditIndex(i)
-    setForm({...rows[i]})
+  function confirmDelete(){
+    if (!deleteCandidateId) return
+    removeRowById(deleteCandidateId)
+  }
+
+  function cancelDelete(){
+    setDeleteCandidateId(null)
+  }
+
+  function startEdit(miembroId){
+    setEditingMiembroID(miembroId)
+    const persona = rows.find(r => r.miembroID === miembroId || r.id === miembroId)
+    if (persona) {
+      // Determinar si tiene acceso al portal basado en si tiene cédula válida
+      const tieneCedulaValida = persona.cedula && 
+                               persona.cedula.trim() !== '' && 
+                               persona.cedula.trim() !== 'no proporcionado' &&
+                               persona.cedula.trim() !== '0'
+      
+      setForm({
+        ...persona,
+        tipos: Array.isArray(persona.tipos) ? persona.tipos : (typeof persona.tipos === 'string' ? persona.tipos.split(',').map(t => t.trim()).filter(Boolean) : []),
+        accesoPortal: tieneCedulaValida, // Activar acceso al portal si tiene cédula válida
+        cedula: persona.cedula || '' // Asegurar que la cédula se muestre
+      })
+    }
     setModal('edit')
   }
 
@@ -515,6 +699,17 @@ export default function Personal(){
       default: return 'text-gray-700 bg-gray-100'
     }
   }
+
+  const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
+  const telefonoValido = /^\d{3}-\d{3}-\d{4}$/.test(form.telefono.trim())
+  const cedulaValida = !form.accesoPortal || (form.cedula.trim().length > 0 && /^\d{1,11}$/.test(form.cedula.trim()))
+  const camposRequeridosCompletos =
+    form.nombre.trim().length > 0 &&
+    emailValido &&
+    telefonoValido &&
+    form.tipos.length > 0 &&
+    cedulaValida
+  const canSubmit = !saving && camposRequeridosCompletos
 
   // Aplicar filtros a los datos
   const rowsFiltrados = rows.filter(row => {
@@ -566,18 +761,6 @@ export default function Personal(){
 
   const irPaginaSiguiente = () => {
     if (paginaActual < totalPaginas) cambiarPagina(paginaActual + 1)
-  }
-
-  // Mostrar loading mientras se verifica la autenticación
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verificando acceso...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -778,6 +961,8 @@ export default function Personal(){
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Personal</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contacto</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Portal</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cédula</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prioridad</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipos</th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
@@ -804,6 +989,18 @@ export default function Personal(){
                       <div className="text-sm text-gray-900">{row.telefono}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        row.cedula && row.cedula.trim() !== '' && row.cedula.trim() !== 'no proporcionado' && row.cedula.trim() !== '0'
+                          ? 'text-green-700 bg-green-100' 
+                          : 'text-gray-700 bg-gray-100'
+                      }`}>
+                        {row.cedula && row.cedula.trim() !== '' && row.cedula.trim() !== 'no proporcionado' && row.cedula.trim() !== '0' ? 'Sí' : 'No'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{row.cedula || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getPrioridadColor(row.prioridad)}`}>
                         {row.prioridad}
                       </span>
@@ -827,13 +1024,13 @@ export default function Personal(){
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
                         <button 
-                          onClick={() => startEdit(indicePrimero + i)}
+                          onClick={() => startEdit(row.miembroID || row.id)}
                           className="text-blue-600 hover:text-blue-800 font-medium"
                         >
                           Editar
                         </button>
                         <button 
-                          onClick={() => removeRow(indicePrimero + i)}
+                          onClick={() => setDeleteCandidateId(row.miembroID || row.id)}
                           className="text-red-600 hover:text-red-800 font-medium"
                         >
                           Eliminar
@@ -844,7 +1041,7 @@ export default function Personal(){
                 ))}
                 {rowsFiltrados.length === 0 && !loading && (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center">
                         <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           {rows.length === 0 ? (
@@ -991,129 +1188,167 @@ export default function Personal(){
         onClose={() => setModal(null)} 
         title={modal === 'edit' ? 'Editar Personal' : 'Agregar Personal'}
       >
-        <form onSubmit={(e) => { e.preventDefault(); saveRow(); }} className="space-y-6">
-          {/* Información Personal */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Información Personal</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre Completo {modal === 'edit' && <span className="text-gray-400">(Solo lectura)</span>}
-                </label>
-                <input
-                  type="text"
-                  value={form.nombre}
-                  onChange={(e) => setForm(f => ({...f, nombre: e.target.value}))}
-                  readOnly={modal === 'edit'}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
-                  }`}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email {modal === 'edit' && <span className="text-gray-400">(Solo lectura)</span>}
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm(f => ({...f, email: e.target.value}))}
-                  readOnly={modal === 'edit'}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
-                  }`}
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Información de Contacto */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Información de Contacto</h4>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Teléfono <span className="text-green-600">(Editable)</span>
-              </label>
-              <input
-                type="tel"
-                value={form.telefono}
-                onChange={(e) => setForm(f => ({...f, telefono: e.target.value}))}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                placeholder="809-555-0123"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Configuración */}
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Configuración</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Prioridad */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
-                <select
-                  value={form.prioridad}
-                  onChange={(e) => setForm(f => ({...f, prioridad: e.target.value}))}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  {prioridadesDisponibles.map(prioridad => (
-                    <option key={prioridad} value={prioridad}>{prioridad}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Estado */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="activo"
-                      checked={form.activo}
-                      onChange={() => setForm(f => ({...f, activo: true}))}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Activo</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="activo"
-                      checked={!form.activo}
-                      onChange={() => setForm(f => ({...f, activo: false}))}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Inactivo</span>
-                  </label>
+        <form onSubmit={(e) => { e.preventDefault(); saveRow(); }} className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Información Personal */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Información Personal</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                  <input
+                    type="text"
+                    value={form.nombre}
+                    onChange={(e) => setForm(f => ({...f, nombre: e.target.value}))}
+                    readOnly={modal === 'edit'}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
+                    }`}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm(f => ({...f, email: e.target.value}))}
+                    readOnly={modal === 'edit'}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
+                    }`}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                  <input
+                    type="tel"
+                    value={form.telefono}
+                    onChange={(e) => {
+                      const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                      const formatted = onlyDigits
+                        .replace(/(\d{3})(\d{1,3})?(\d{1,4})?/, (_, a, b, c) => {
+                          let result = a
+                          if (b) result += `-${b}`
+                          if (c) result += `-${c}`
+                          return result
+                        })
+                      setForm(f => ({ ...f, telefono: formatted }))
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    placeholder="000-000-0000"
+                    maxLength={12}
+                    inputMode="numeric"
+                    pattern="\d{3}-\d{3}-\d{4}"
+                    title="Formato: 000-000-0000"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Solo números; máximo 10 dígitos. Se aplicará formato 000-000-0000 automáticamente.</p>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Tipos (Multi-select) */}
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">Tipos de Personal</h4>
-            <p className="text-sm text-gray-600 mb-3">Selecciona uno o más tipos (puede tener múltiples roles)</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {tiposDisponibles.map(tipo => (
-                <label key={tipo} className="flex items-center p-3 border rounded-lg hover:bg-white cursor-pointer transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={form.tipos.includes(tipo)}
-                    onChange={() => toggleTipo(tipo)}
-                    className="text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-3 text-sm font-medium text-gray-700">{tipo}</span>
-                </label>
-              ))}
+            {/* Configuración */}
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Configuración</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Prioridad</label>
+                  <select
+                    value={form.prioridad}
+                    onChange={(e) => setForm(f => ({...f, prioridad: e.target.value}))}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    {prioridadesDisponibles.map(prioridad => (
+                      <option key={prioridad} value={prioridad}>{prioridad}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="activo"
+                        checked={form.activo}
+                        onChange={() => setForm(f => ({...f, activo: true}))}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Activo</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="activo"
+                        checked={!form.activo}
+                        onChange={() => setForm(f => ({...f, activo: false}))}
+                        className="text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Inactivo</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">Dar acceso al portal</label>
+                    <button
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, accesoPortal: !f.accesoPortal }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.accesoPortal ? 'bg-green-500' : 'bg-gray-300'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.accesoPortal ? 'translate-x-5' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+
+                  {form.accesoPortal && (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cédula</label>
+                      <input
+                        type="text"
+                        value={form.cedula}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '')
+                          setForm(f => ({ ...f, cedula: value.slice(0, 11) }))
+                        }}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        placeholder="12345678901"
+                        maxLength={11}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        required={form.accesoPortal}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Máximo 11 dígitos (solo números).</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            {form.tipos.length === 0 && (
-              <p className="text-red-500 text-sm mt-2">Debe seleccionar al menos un tipo</p>
-            )}
+
+            {/* Tipos (Multi-select) */}
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Tipos de Personal</h4>
+              <p className="text-sm text-gray-600 mb-3">Selecciona uno o más tipos (puede tener múltiples roles)</p>
+              <div className="flex flex-wrap gap-3">
+                {tiposDisponibles.map(tipo => (
+                  <label key={tipo} className="flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-white cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={form.tipos.includes(tipo)}
+                      onChange={() => toggleTipo(tipo)}
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">{tipo}</span>
+                  </label>
+                ))}
+              </div>
+              {form.tipos.length === 0 && (
+                <p className="text-red-500 text-sm mt-2">Debe seleccionar al menos un tipo</p>
+              )}
+            </div>
           </div>
 
           {/* Buttons */}
@@ -1128,8 +1363,8 @@ export default function Personal(){
             </button>
             <button
               type="submit"
-              disabled={form.tipos.length === 0 || saving}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              disabled={!canSubmit}
+              className={`px-6 py-2 text-white rounded-lg transition-colors flex items-center gap-2 ${canSubmit ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}
             >
               {saving && (
                 <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -1139,11 +1374,36 @@ export default function Personal(){
               )}
               {saving 
                 ? 'Guardando...' 
-                : (modal === 'edit' ? 'Guardar Cambios' : 'Crear Personal')
+                : (modal === 'edit' ? 'Guardar Cambios' : 'Registrar Usuario')
               }
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Confirmación de eliminación via popup */}
+      <Modal
+        open={!!deleteCandidateId}
+        onClose={cancelDelete}
+        title="Confirmar eliminación"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">¿Estás seguro de que deseas eliminar este personal? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-2 pt-3 border-t border-gray-200">
+            <button
+              onClick={cancelDelete}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+            >
+              Eliminar
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* Toast Notifications */}

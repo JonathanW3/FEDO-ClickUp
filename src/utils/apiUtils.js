@@ -48,23 +48,18 @@ export async function callN8NAPI(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, mergedOptions);
-    const result = await response.json();
+    const responseText = await response.text();
 
     if (!response.ok) {
-      const errorText = await result.message;
-      throw new Error(`Error HTTP ${response.status}: ${errorText}`);
+      throw new Error(`Error HTTP ${response.status}: ${responseText}`);
     }
-
-    // Verificar si hay contenido antes de parsear JSON
-    const contentType = response.headers.get('content-type');
-    const responseText = await response.text();
 
     if (!responseText || responseText.trim() === '') {
       console.warn(`⚠️ Respuesta vacía de ${endpoint}`);
       return [];
     }
 
-    // Verificar si es JSON válido
+    const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       console.warn(`⚠️ Respuesta no es JSON de ${endpoint}:`, responseText);
       throw new Error(`Respuesta no es JSON válido: ${responseText.substring(0, 100)}...`);
@@ -72,7 +67,7 @@ export async function callN8NAPI(endpoint, options = {}) {
 
     try {
       const data = JSON.parse(responseText);
-      console.log(`✅ Respuesta exitosa de ${endpoint}:`, data);
+      console.log(`✅ Sistemas obtenidos:`, data);
       return data;
     } catch (jsonError) {
       console.error(`❌ Error al parsear JSON de ${endpoint}:`, responseText);
@@ -158,6 +153,29 @@ export async function obtenerCertificacion() {
   } catch (error) {
     console.error('❌ Error específico en obtenerCertificacion:', error);
     throw new Error(`No se pudo obtener los datos de certificaciones: ${error.message}`);
+  }
+}
+
+// Obtener lista de sistemas disponibles
+export async function obtenerSistemas() {
+  try {
+    const response = await callN8NAPI('TablaMiembros', {
+      method: 'POST',
+      body: JSON.stringify({
+        "Table": "Sistemas",
+        "Type": "SQL"
+      })
+    });
+
+    if (!Array.isArray(response)) {
+      console.warn('⚠️ Respuesta de sistemas no es un array:', response);
+      return [];
+    }
+
+    return response;
+  } catch (error) {
+    console.error('❌ Error específico en obtenerSistemas:', error);
+    throw new Error(`No se pudo obtener la lista de sistemas: ${error.message}`);
   }
 }
 
@@ -281,7 +299,7 @@ export async function crearTarea(datosTarea) {
 // Función para endpoints futuros (ejemplo)
 export async function actualizarMiembro(id, datosPersonal) {
   const payload = {
-    "Table": "MiembroNU",
+    "Table": "MiembroMod",
     "Type": "SQl",
     "Data": {
       ...datosPersonal,
@@ -327,6 +345,8 @@ export function formatearDatosParaAPI(formData) {
     celular: formData.telefono,
     prioridad: formData.prioridad,
     id_clickup: null,
-    tipos: convertirTiposANumeros(formData.tipos)
+    tipos: convertirTiposANumeros(formData.tipos),
+    accesoPortal: Boolean(formData.accesoPortal),
+    cedula: formData.accesoPortal ? formData.cedula : ''
   };
 }
