@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar.jsx';
 import WebPOSLogo from './WebPOSLogo.jsx';
 import { logout, getCurrentUser } from '../utils/authUtils';
+import { ChatWidget } from './ChatWidget.jsx';
 
 function AppHeader({ currentUser }) {
   const navigate = useNavigate();
@@ -164,6 +165,7 @@ export default function AppLayout({ children, dashboardActiveView, onDashboardVi
           </main>
         </div>
       </div>
+      <ChatWidget />
     </div>
   );
 }

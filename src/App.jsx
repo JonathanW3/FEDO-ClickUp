@@ -6,12 +6,10 @@ import Alertas from './pages/Alertas.jsx'
 import Reportes from './pages/Reportes.jsx'
 import Tablas from './pages/Tablas.jsx'
 import Personal from './pages/Personal.jsx'
-import { ChatWidget } from './components/ChatWidget.jsx'
 
 export default function App() {
   return (
     <div>
-      {<ChatWidget />}
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
