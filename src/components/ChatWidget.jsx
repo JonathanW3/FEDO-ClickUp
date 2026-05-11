@@ -1,7 +1,7 @@
 // components/ChatWidget.jsx
 import { useState, useRef, useEffect } from 'react';
 
-const WEBHOOK_URL = 'https://n8n-dev.waopos.com/webhook/89c5da79-c59c-4a16-abc9-88211ff7d44d/chat';
+const WEBHOOK_URL = '/webhook/89c5da79-c59c-4a16-abc9-88211ff7d44d/chat';
 
 function generateSessionId() {
   return 'session-' + Math.random().toString(36).substring(2, 15);

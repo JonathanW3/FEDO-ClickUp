@@ -115,7 +115,7 @@ export default function CrearTareas() {
   const obtenerDistribuidores = async () => {
     setCargandoDistribuidores(true)
     try {
-      const response = await fetch('https://n8n-dev.waopos.com/webhook/TablaMiembros', {
+      const response = await fetch('/webhook/TablaMiembros', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ export default function CrearTareas() {
   const obtenerTecnicos = async () => {
     setCargandoTecnicos(true)
     try {
-      const response = await fetch('https://n8n-dev.waopos.com/webhook/TablaMiembros', {
+      const response = await fetch('/webhook/TablaMiembros', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,7 +201,7 @@ export default function CrearTareas() {
   const obtenerVendedores = async () => {
     setCargandoVendedores(true)
     try {
-      const response = await fetch('https://n8n-dev.waopos.com/webhook/TablaMiembros', {
+      const response = await fetch('/webhook/TablaMiembros', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

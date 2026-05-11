@@ -106,7 +106,7 @@ export default function Login(){
       console.log('🔐 Solicitando código 2FA...')
       
       // Llamar a API para solicitar código 2FA
-      const response = await fetch('https://n8n-dev.waopos.com/webhook/TablaMiembros', {
+      const response = await fetch('/webhook/TablaMiembros', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -206,7 +206,7 @@ export default function Login(){
       console.log('📤 Enviando código:', codigo2FA)
       
       // Llamar a API para verificar el código
-      const response = await fetch('https://n8n-dev.waopos.com/webhook/TablaMiembros', {
+      const response = await fetch('/webhook/TablaMiembros', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -4,7 +4,7 @@
  */
 
 // Base URL para las APIs de N8N (usando variable de entorno)
-const N8N_BASE_URL = import.meta.env.VITE_N8N_BASE_URL || 'https://n8n-dev.waopos.com/webhook';
+const N8N_BASE_URL = import.meta.env.VITE_N8N_BASE_URL || '/webhook';
 
 /**
  * Función genérica para hacer llamadas a la API de N8N
