@@ -6,6 +6,24 @@ import { useToast } from '../hooks/useToast.js'
 import { obtenerMiembros, crearMiembro, actualizarMiembro, formatearDatosParaAPI, TIPOS_PERSONAL } from '../utils/apiUtils.js'
 import { requireAuth, getCurrentUser } from '../utils/authUtils'
 
+// Telefono: solo digitos, sin guiones. El rango cubre numeros locales y con
+// codigo de pais (E.164 admite hasta 15 digitos).
+const TELEFONO_MIN_DIGITOS = 7
+const TELEFONO_MAX_DIGITOS = 15
+const TELEFONO_PATTERN = '[0-9]{7,15}'
+const TELEFONO_REGEX = /^[0-9]{7,15}$/
+// Valores con los que quedaron guardados los registros antiguos sin telefono
+const TELEFONO_SIN_DATO = ['', 'n/a', 'na', 'no proporcionado', 'null', 'undefined']
+
+// Los registros guardados antes traen el telefono con guiones ('809-555-0123').
+// Al abrir el formulario se dejan solo los digitos; los marcadores sin numero
+// ('N/A', 'no proporcionado') se conservan tal cual para poder reconocerlos.
+function normalizarTelefono(valor) {
+  const texto = (valor ?? '').toString().trim()
+  const digitos = texto.replace(/[^0-9]/g, '')
+  return digitos.length >= TELEFONO_MIN_DIGITOS ? digitos : texto
+}
+
 function Modal({open, onClose, title, children}){
   if(!open) return null
   return (
@@ -60,6 +78,8 @@ export default function Personal(){
   })
   const [editingMiembroID, setEditingMiembroID] = useState(null)
   const [deleteCandidateId, setDeleteCandidateId] = useState(null)
+  const [duplicadoPendiente, setDuplicadoPendiente] = useState(null)
+  const [emailTocado, setEmailTocado] = useState(false)
 
   // Paginación
   const [paginaActual, setPaginaActual] = useState(1)
@@ -81,53 +101,6 @@ export default function Personal(){
 
   // Mapeo de tipos para la API (ahora importado desde utils)
   const tiposToNumbers = TIPOS_PERSONAL
-
-  // Datos de ejemplo como fallback
-  const datosEjemplo = [
-    {
-      miembroID: 1,
-      personal: "Juan Carlos Pérez",
-      email: "juan.perez@webpos.com",
-      contacto: "809-555-0123",
-      prioridad: "Alta",
-      tipos: "Tecnico, Gerencia",
-      estado: "Activo"
-    },
-    {
-      miembroID: 2,
-      personal: "María González",
-      email: "maria.gonzalez@webpos.com", 
-      contacto: "809-555-0124",
-      prioridad: "Media",
-      tipos: "Vendedor",
-      estado: "Activo"
-    }
-  ]
-
-  // Función para cargar datos de ejemplo
-  function cargarDatosEjemplo() {
-    const personalTransformado = datosEjemplo.map(item => {
-      // Determinar acceso al portal basado en la cédula (simulando que no hay cédula en ejemplo)
-      const cedulaActual = ''; // Los datos de ejemplo no tienen cédula
-      const tieneAccesoPortal = false; // Por defecto no tienen acceso
-      
-      return {
-        id: item.miembroID,
-        nombre: item.personal,
-        email: item.email,
-        telefono: item.contacto?.toString() || '',
-        prioridad: item.prioridad || 'Media',
-        tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
-        activo: item.estado === 'Activo',
-        accesoPortal: tieneAccesoPortal, // Determinado por la cédula
-        cedula: cedulaActual
-      }
-    })
-    
-    setRows(personalTransformado)
-    setError(null)
-    console.log('✅ Datos de ejemplo cargados')
-  }
 
   // Función de diagnóstico para probar la API
   async function diagnosticarAPI() {
@@ -174,92 +147,6 @@ export default function Personal(){
     } catch (error) {
       console.error('❌ Error en diagnóstico:', error)
       showError(`Error de conexión: ${error.message}`)
-    }
-  }
-
-  // Función para probar diferentes configuraciones de la API
-  async function probarAPI() {
-    const apiUrl = import.meta.env.VITE_PERSONAL_API_URL
-    const apiDirecta = import.meta.env.VITE_PERSONAL_API_DIRECT
-    
-    console.log('=== PRUEBA DE API ===')
-    console.log('URL con proxy:', apiUrl)
-    console.log('URL directa:', apiDirecta)
-    
-    // Probar con diferentes URLs y métodos
-    const configuraciones = [
-      {
-        nombre: 'POST con proxy (recomendado)',
-        url: apiUrl,
-        config: {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        }
-      },
-      {
-        nombre: 'GET con proxy',
-        url: apiUrl,
-        config: {
-          method: 'GET'
-        }
-      },
-      {
-        nombre: 'POST directo (CORS probablemente falle)',
-        url: apiDirecta,
-        config: {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        }
-      }
-    ]
-    
-    for (const { nombre, url, config } of configuraciones) {
-      try {
-        console.log(`\nProbando: ${nombre}`)
-        console.log(`URL: ${url}`)
-        const response = await fetch(url, config)
-        console.log(`Status: ${response.status}`)
-        console.log(`Headers:`, Object.fromEntries(response.headers.entries()))
-        
-        if (response.ok) {
-          const data = await response.json()
-          console.log(`✅ ÉXITO! Datos recibidos:`, data)
-          
-          // Si funciona, actualizar automáticamente
-          if (Array.isArray(data)) {
-            const personalTransformado = data.map(item => {
-              // Determinar acceso al portal basado en la cédula
-              const cedulaActual = item.cedula || '';
-              const tieneAccesoPortal = cedulaActual && 
-                                       cedulaActual.trim() !== '' && 
-                                       cedulaActual.trim() !== 'no proporcionado' &&
-                                       cedulaActual.trim() !== '0';
-              
-              return {
-                id: item.miembroID,
-                nombre: item.personal || 'N/A',
-                email: item.email || 'N/A',
-                telefono: item.contacto?.toString() || 'N/A',
-                prioridad: item.prioridad || 'Media',
-                tipos: item.tipos ? item.tipos.split(', ').map(t => t.trim()) : [],
-                activo: item.estado === 'Activo',
-                accesoPortal: tieneAccesoPortal, // Determinado por la cédula
-                cedula: cedulaActual
-              }
-            })
-            setRows(personalTransformado)
-            setError(null)
-            console.log('✅ Datos cargados automáticamente en la tabla')
-          }
-          break // Si funciona, salir del bucle
-        } else {
-          console.log(`❌ Error HTTP: ${response.status} ${response.statusText}`)
-        }
-      } catch (error) {
-        console.log(`❌ Error con ${nombre}:`, error.message)
-      }
     }
   }
 
@@ -337,14 +224,12 @@ export default function Personal(){
       console.error('❌ Error al cargar personal:', err)
       setError(err.message)
       
-      // Mostrar notificación de error
+      // Mostrar notificación de error. No se sustituyen los datos: la tabla
+      // conserva lo ultimo real que se leyo y avisa que hay que recargar.
       showError(
-        `Error al cargar el personal: ${err.message}. Usando datos de ejemplo.`,
+        `Error al cargar el personal: ${err.message}. Por favor, recarga la página.`,
         5000
       )
-      
-      // Cargar datos de ejemplo como fallback
-      cargarDatosEjemplo()
     } finally {
       setLoading(false)
     }
@@ -368,9 +253,40 @@ export default function Personal(){
       cedula: ''
     })
     setEditingMiembroID(null)
+    setEmailTocado(false)
+  }
+
+  // Busca un miembro ya registrado con el mismo correo.
+  // excluirMiembroID evita que, al editar, el usuario choque consigo mismo.
+  function buscarMiembroPorEmail(email, excluirMiembroID = null) {
+    const objetivo = (email || '').trim().toLowerCase()
+    if (!objetivo || objetivo === 'n/a') return null
+
+    return rows.find(row => {
+      const esElMismo = excluirMiembroID != null &&
+        (row.miembroID === excluirMiembroID || row.id === excluirMiembroID)
+      if (esElMismo) return false
+
+      const correo = (row.email || '').trim().toLowerCase()
+      return correo !== '' && correo !== 'n/a' && correo === objetivo
+    }) || null
   }
 
   function saveRow(){
+    // Si el correo ya pertenece a otro usuario, pedir confirmación antes de enviar
+    const duplicado = buscarMiembroPorEmail(form.email, editingMiembroID)
+    if (duplicado) {
+      setDuplicadoPendiente({
+        email: form.email.trim(),
+        nombre: duplicado.nombre || duplicado.personal || 'otro usuario'
+      })
+      return
+    }
+
+    guardarPersonal()
+  }
+
+  function guardarPersonal(){
     if(editingMiembroID){
       // Editando registro existente - consumir API
       editarPersonalExistente()
@@ -378,6 +294,12 @@ export default function Personal(){
       // Creando nuevo personal - consumir API
       crearNuevoPersonal()
     }
+  }
+
+  // El usuario confirmó que quiere guardar aunque el correo esté repetido
+  function confirmarDuplicado(){
+    setDuplicadoPendiente(null)
+    guardarPersonal()
   }
 
   async function editarPersonalExistente() {
@@ -397,84 +319,18 @@ export default function Personal(){
 
       console.log('📊 Respuesta de la API al actualizar:', responseData)
 
-      // Transformar la respuesta de la API al formato de la tabla
-      let personaActualizada;
-      
-      if (Array.isArray(responseData) && responseData.length > 0) {
-        // Si la API devuelve un array, usar el primer elemento
-        const miembroData = responseData[0].crear_o_actualizar_miembro_json || responseData[0];
-        
-        console.log('🔍 Datos específicos del miembro actualizado:', {
-          accesoPortal: miembroData.accesoPortal,
-          cedula: miembroData.cedula,
-          todosLosCampos: Object.keys(miembroData)
-        });
-        
-        // Determinar acceso al portal basado en la cédula (ya que no se guarda en DB)
-        const cedulaGuardada = miembroData.cedula || (form.accesoPortal ? form.cedula : '');
-        const tieneAccesoPortal = cedulaGuardada && 
-                                 cedulaGuardada.trim() !== '' && 
-                                 cedulaGuardada.trim() !== 'no proporcionado' &&
-                                 cedulaGuardada.trim() !== '0';
-        
-        personaActualizada = {
-          id: miembroId,
-          miembroID: miembroId,
-          nombre: miembroData.nombre || form.nombre,
-          email: miembroData.email || form.email,
-          telefono: miembroData.celular?.toString() || form.telefono,
-          prioridad: miembroData.prioridad || form.prioridad,
-          tipos: Array.isArray(miembroData.tipos) 
-            ? miembroData.tipos.map(tipoNum => {
-                const tipoTexto = Object.keys(TIPOS_PERSONAL).find(key => TIPOS_PERSONAL[key] === tipoNum);
-                return tipoTexto || `Tipo ${tipoNum}`;
-              })
-            : (typeof miembroData.tipos === 'string' 
-                ? miembroData.tipos.split(', ').map(t => t.trim()).filter(Boolean)
-                : form.tipos),
-          activo: typeof miembroData.estado === 'string' 
-            ? miembroData.estado.trim().toLowerCase() === 'activo'
-            : miembroData.activo ?? form.activo,
-          personal: miembroData.nombre || form.nombre,
-          contacto: miembroData.celular?.toString() || form.telefono,
-          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
-          cedula: cedulaGuardada
-        };
-      } else {
-        // Si no hay respuesta estructurada, usar los datos del formulario
-        const cedulaGuardada = form.accesoPortal ? form.cedula : '';
-        const tieneAccesoPortal = cedulaGuardada && 
-                                 cedulaGuardada.trim() !== '' && 
-                                 cedulaGuardada.trim() !== 'no proporcionado' &&
-                                 cedulaGuardada.trim() !== '0';
-        
-        personaActualizada = {
-          id: miembroId,
-          miembroID: miembroId,
-          nombre: form.nombre,
-          email: form.email,
-          telefono: form.telefono,
-          prioridad: form.prioridad,
-          tipos: form.tipos,
-          activo: form.activo,
-          personal: form.nombre,
-          contacto: form.telefono,
-          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
-          cedula: cedulaGuardada
-        };
-      }
+      // Releer desde la base de datos: la tabla solo debe reflejar lo que quedó guardado
+      await cargarPersonal()
 
-      // Actualizar en el estado local con los datos transformados
-      setRows(r => r.map((x) => x.miembroID === miembroId ? personaActualizada : x))
-      
       setModal(null)
-      
+      setEmailTocado(false)
+
       // Mostrar notificación de éxito
       showSuccess(
-        `✅ ${personaActualizada.nombre} ha sido actualizado exitosamente. Los cambios se han guardado en el sistema.`,
+        `✅ ${form.nombre} ha sido actualizado exitosamente. Los cambios se han guardado en el sistema.`,
         5000
       )
-      
+
     } catch (error) {
       console.error('❌ Error al editar personal:', error)
       showError(
@@ -500,72 +356,13 @@ export default function Personal(){
 
       console.log('📊 Respuesta de la API al crear:', responseData)
 
-      // Extraer ID y transformar datos de respuesta
-      let nuevoPersonal;
-      const newId = Math.max(...rows.map(r => r.id || 0), 0) + 1
+      // Releer desde la base de datos: la tabla solo debe reflejar lo que quedó guardado
+      const nombreCreado = form.nombre
+      await cargarPersonal()
 
-      if (Array.isArray(responseData) && responseData.length > 0) {
-        // Si la API devuelve un array, usar el primer elemento
-        const miembroData = responseData[0].crear_o_actualizar_miembro_json || responseData[0];
-        const miembroID = miembroData.miembroID || newId;
-
-        // Determinar acceso al portal basado en la cédula
-        const cedulaGuardada = miembroData.cedula || (form.accesoPortal ? form.cedula : '');
-        const tieneAccesoPortal = cedulaGuardada && 
-                                 cedulaGuardada.trim() !== '' && 
-                                 cedulaGuardada.trim() !== 'no proporcionado' &&
-                                 cedulaGuardada.trim() !== '0';
-
-        nuevoPersonal = {
-          id: miembroID,
-          miembroID: miembroID,
-          nombre: miembroData.nombre || form.nombre,
-          email: miembroData.email || form.email,
-          telefono: miembroData.celular?.toString() || form.telefono,
-          prioridad: miembroData.prioridad || form.prioridad,
-          tipos: Array.isArray(miembroData.tipos)
-            ? miembroData.tipos.map(tipoNum => {
-                const tipoTexto = Object.keys(TIPOS_PERSONAL).find(key => TIPOS_PERSONAL[key] === tipoNum);
-                return tipoTexto || `Tipo ${tipoNum}`;
-              })
-            : (typeof miembroData.tipos === 'string' 
-                ? miembroData.tipos.split(', ').map(t => t.trim()).filter(Boolean)
-                : form.tipos),
-          activo: typeof miembroData.estado === 'string' 
-            ? miembroData.estado.trim().toLowerCase() === 'activo'
-            : (miembroData.activo ?? form.activo),
-          personal: miembroData.nombre || form.nombre,
-          contacto: miembroData.celular?.toString() || form.telefono,
-          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
-          cedula: cedulaGuardada
-        };
-      } else {
-        // Si no hay respuesta estructurada, usar los datos del formulario
-        const cedulaGuardada = form.accesoPortal ? form.cedula : '';
-        const tieneAccesoPortal = cedulaGuardada && 
-                                 cedulaGuardada.trim() !== '' && 
-                                 cedulaGuardada.trim() !== 'no proporcionado' &&
-                                 cedulaGuardada.trim() !== '0';
-        
-        nuevoPersonal = {
-          id: newId,
-          miembroID: newId,
-          nombre: form.nombre,
-          email: form.email,
-          telefono: form.telefono,
-          prioridad: form.prioridad,
-          tipos: form.tipos,
-          activo: form.activo,
-          personal: form.nombre,
-          contacto: form.telefono,
-          accesoPortal: tieneAccesoPortal, // Determinado por la cédula
-          cedula: cedulaGuardada
-        };
-      }
-      
-      setRows(r => [...r, nuevoPersonal])
       setModal(null)
-      
+      setEmailTocado(false)
+
       // Resetear el formulario
       setForm({
         nombre: '',
@@ -580,7 +377,7 @@ export default function Personal(){
       
       // Mostrar notificación de éxito profesional
       showSuccess(
-        `✅ ${nuevoPersonal.nombre} ha sido agregado exitosamente al equipo. El registro está ahora disponible en la tabla.`,
+        `✅ ${nombreCreado} ha sido agregado exitosamente al equipo. El registro está ahora disponible en la tabla.`,
         5000
       )
       
@@ -604,34 +401,6 @@ export default function Personal(){
         6000
       )
       
-      // Mostrar opción de guardado local como fallback
-      setTimeout(() => {
-        const confirmLocal = window.confirm(
-          `No se pudo conectar con el servidor para guardar "${form.nombre}".\n\n` +
-          '¿Desea guardar este registro localmente como borrador?\n\n' +
-          'Nota: Los borradores locales no se sincronizan con el servidor.'
-        )
-        
-        if (confirmLocal) {
-          const newId = Math.max(...rows.map(r => r.id || 0), 0) + 1
-          const nuevoPersonal = {
-            ...form, 
-            id: newId,
-            personal: form.nombre,
-            contacto: form.telefono,
-            tipos: form.tipos.join(', '),
-            accesoPortal: false,
-            cedula: ''
-          }
-          setRows(r => [...r, nuevoPersonal])
-          setModal(null)
-          
-          showWarning(
-            `📝 ${form.nombre} guardado como borrador local. Sincronizar cuando se restablezca la conexión.`,
-            5000
-          )
-        }
-      }, 1000)
     } finally {
       setSaving(false)
     }
@@ -665,10 +434,12 @@ export default function Personal(){
       setForm({
         ...persona,
         tipos: Array.isArray(persona.tipos) ? persona.tipos : (typeof persona.tipos === 'string' ? persona.tipos.split(',').map(t => t.trim()).filter(Boolean) : []),
+        telefono: normalizarTelefono(persona.telefono),
         accesoPortal: tieneCedulaValida, // Activar acceso al portal si tiene cédula válida
         cedula: persona.cedula || '' // Asegurar que la cédula se muestre
       })
     }
+    setEmailTocado(false)
     setModal('edit')
   }
 
@@ -701,7 +472,16 @@ export default function Personal(){
   }
 
   const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())
-  const telefonoValido = /^\d{3}-\d{3}-\d{4}$/.test(form.telefono.trim())
+  // Aviso inline: solo tras salir del campo y con un correo bien formado
+  const miembroEmailDuplicado = (modal && emailTocado && emailValido)
+    ? buscarMiembroPorEmail(form.email, editingMiembroID)
+    : null
+  // Los registros antiguos se guardaron sin telefono ('N/A', 'no proporcionado'), asi que
+  // en edicion se permite guardar con ese valor o con el campo vacio (n8n lo marca como
+  // 'no proporcionado'). Si se escribe un numero, debe ser valido. En altas es obligatorio.
+  const telefonoSinDato = TELEFONO_SIN_DATO.includes(form.telefono.trim().toLowerCase())
+  const telefonoValido = TELEFONO_REGEX.test(form.telefono.trim()) ||
+    (modal === 'edit' && telefonoSinDato)
   const cedulaValida = !form.accesoPortal || (form.cedula.trim().length > 0 && /^\d{1,11}$/.test(form.cedula.trim()))
   const camposRequeridosCompletos =
     form.nombre.trim().length > 0 &&
@@ -971,17 +751,10 @@ export default function Personal(){
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {rowsPaginados.map((row, i) => (
-                  <tr key={row.id} className={`hover:bg-gray-50 ${row.esBorrador ? 'bg-yellow-50 border-l-4 border-yellow-400' : ''}`}>
+                  <tr key={row.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                          {row.nombre}
-                          {row.esBorrador && (
-                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                              📝 Borrador
-                            </span>
-                          )}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900">{row.nombre}</div>
                         <div className="text-sm text-gray-500">{row.email}</div>
                       </div>
                     </td>
@@ -1043,20 +816,33 @@ export default function Personal(){
                   <tr>
                     <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center">
-                        <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          {rows.length === 0 ? (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                          ) : (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                          )}
-                        </svg>
-                        {rows.length === 0 ? (
+                        {error ? (
                           <>
+                            <svg className="w-12 h-12 text-red-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <p className="text-lg font-medium text-gray-900 mb-1">No se pudieron cargar los datos</p>
+                            <p className="text-gray-500 mb-3">Hubo un error de conexión con el servidor. Por favor, recarga la página.</p>
+                            <button
+                              onClick={cargarPersonal}
+                              className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              Reintentar
+                            </button>
+                          </>
+                        ) : rows.length === 0 ? (
+                          <>
+                            <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
                             <p className="text-lg font-medium text-gray-900 mb-1">No hay personal registrado</p>
                             <p className="text-gray-500">Los datos se cargarán desde la API o puedes agregar personal manualmente</p>
                           </>
                         ) : (
                           <>
+                            <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
                             <p className="text-lg font-medium text-gray-900 mb-1">No se encontraron resultados</p>
                             <p className="text-gray-500 mb-3">Intenta ajustar los filtros de búsqueda</p>
                             <button
@@ -1200,10 +986,7 @@ export default function Personal(){
                     type="text"
                     value={form.nombre}
                     onChange={(e) => setForm(f => ({...f, nombre: e.target.value}))}
-                    readOnly={modal === 'edit'}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
-                    }`}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     required
                   />
                 </div>
@@ -1213,12 +996,22 @@ export default function Personal(){
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm(f => ({...f, email: e.target.value}))}
-                    readOnly={modal === 'edit'}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      modal === 'edit' ? 'bg-gray-100 text-gray-600' : 'bg-white'
+                    onBlur={() => setEmailTocado(true)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white ${
+                      miembroEmailDuplicado
+                        ? 'border-amber-400 focus:ring-amber-500'
+                        : 'focus:ring-blue-500'
                     }`}
                     required
                   />
+                  {miembroEmailDuplicado && (
+                    <p className="mt-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      ⚠️ Este correo ya está registrado en{' '}
+                      <span className="font-semibold">
+                        {miembroEmailDuplicado.nombre || miembroEmailDuplicado.personal}
+                      </span>.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
@@ -1226,25 +1019,25 @@ export default function Personal(){
                     type="tel"
                     value={form.telefono}
                     onChange={(e) => {
-                      const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
-                      const formatted = onlyDigits
-                        .replace(/(\d{3})(\d{1,3})?(\d{1,4})?/, (_, a, b, c) => {
-                          let result = a
-                          if (b) result += `-${b}`
-                          if (c) result += `-${c}`
-                          return result
-                        })
-                      setForm(f => ({ ...f, telefono: formatted }))
+                      const soloDigitos = e.target.value.replace(/[^0-9]/g, '').slice(0, TELEFONO_MAX_DIGITOS)
+                      setForm(f => ({ ...f, telefono: soloDigitos }))
                     }}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                    placeholder="000-000-0000"
-                    maxLength={12}
+                    placeholder="Solo números, sin guiones"
+                    maxLength={TELEFONO_MAX_DIGITOS}
                     inputMode="numeric"
-                    pattern="\d{3}-\d{3}-\d{4}"
-                    title="Formato: 000-000-0000"
-                    required
+                    pattern={modal === 'edit' ? undefined : TELEFONO_PATTERN}
+                    title={`Solo números: entre ${TELEFONO_MIN_DIGITOS} y ${TELEFONO_MAX_DIGITOS} dígitos`}
+                    required={modal !== 'edit'}
                   />
-                  <p className="text-xs text-gray-500 mt-1">Solo números; máximo 10 dígitos. Se aplicará formato 000-000-0000 automáticamente.</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Solo números, sin guiones ni espacios. Entre {TELEFONO_MIN_DIGITOS} y {TELEFONO_MAX_DIGITOS} dígitos.
+                  </p>
+                  {modal === 'edit' && telefonoSinDato && (
+                    <p className="text-xs text-amber-700 mt-1">
+                      Este registro quedó guardado sin teléfono. Puedes dejarlo así o escribir el número; si lo dejas vacío se guardará como "no proporcionado".
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1379,6 +1172,39 @@ export default function Personal(){
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Confirmación de correo duplicado */}
+      <Modal
+        open={!!duplicadoPendiente}
+        onClose={() => setDuplicadoPendiente(null)}
+        title="Correo ya registrado"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            El correo <span className="font-semibold">'{duplicadoPendiente?.email}'</span> ya está
+            ingresado en el usuario <span className="font-semibold">'{duplicadoPendiente?.nombre}'</span>.
+          </p>
+          <p className="text-sm text-gray-500">
+            Cancela para corregir el correo, o continúa de todos modos.
+          </p>
+          <div className="flex justify-end gap-2 pt-3 border-t border-gray-200">
+            <button
+              onClick={() => setDuplicadoPendiente(null)}
+              disabled={saving}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmarDuplicado}
+              disabled={saving}
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {editingMiembroID ? 'Guardar cambios' : 'Crear usuario'}
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* Confirmación de eliminación via popup */}

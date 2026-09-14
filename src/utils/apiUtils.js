@@ -296,7 +296,7 @@ export async function crearTarea(datosTarea) {
   }
 }
 
-// Función para endpoints futuros (ejemplo)
+// Función para actualización de miembros
 export async function actualizarMiembro(id, datosPersonal) {
   const payload = {
     "Table": "MiembroMod",
@@ -337,7 +337,7 @@ export function convertirTiposANumeros(tiposTexto) {
   return tiposTexto.map(tipo => TIPOS_PERSONAL[tipo]).filter(Boolean);
 }
 
-// Función para formatear datos del formulario para la API
+// Función para datos del formulario
 export function formatearDatosParaAPI(formData) {
   return {
     nombre: formData.nombre,
@@ -346,6 +346,7 @@ export function formatearDatosParaAPI(formData) {
     prioridad: formData.prioridad,
     id_clickup: null,
     tipos: convertirTiposANumeros(formData.tipos),
+    activo: Boolean(formData.activo),
     accesoPortal: Boolean(formData.accesoPortal),
     cedula: formData.accesoPortal ? formData.cedula : ''
   };
