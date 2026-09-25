@@ -1,4 +1,3 @@
-// components/ChatWidget.jsx
 import { useState, useRef, useEffect } from 'react';
 
 const WEBHOOK_URL = '/webhook/89c5da79-c59c-4a16-abc9-88211ff7d44d/chat';

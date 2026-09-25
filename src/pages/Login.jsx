@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import WebPOSLogo from '../components/WebPOSLogo'
 import { iniciarSesion } from '../utils/apiUtils'
 import { saveUserSession, isAuthenticated } from '../utils/authUtils'
-import { ChatWidget } from '../components/ChatWidget'
+// import { ChatWidget } from '../components/ChatWidget'
 
 const RECAPTCHA_SITE_KEY = '6LcjaaskAAAAABWJYC0TKyTaxHtNyWBB3YQ5hOHE'
 
@@ -621,7 +621,7 @@ export default function Login(){
           </div>
         </div>
       </div>
-      <ChatWidget />
+      {/* <ChatWidget /> */}
     </div>
   )
 }
