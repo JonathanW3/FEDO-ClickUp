@@ -1023,7 +1023,7 @@ export default function Personal(){
                       setForm(f => ({ ...f, telefono: soloDigitos }))
                     }}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                    placeholder="Solo números, sin guiones"
+                    placeholder="00000000"
                     maxLength={TELEFONO_MAX_DIGITOS}
                     inputMode="numeric"
                     pattern={modal === 'edit' ? undefined : TELEFONO_PATTERN}
@@ -1031,7 +1031,7 @@ export default function Personal(){
                     required={modal !== 'edit'}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Solo números, sin guiones ni espacios. Entre {TELEFONO_MIN_DIGITOS} y {TELEFONO_MAX_DIGITOS} dígitos.
+                    Si no tiene telefono coloque 0000000. Se permite entre {TELEFONO_MIN_DIGITOS} y {TELEFONO_MAX_DIGITOS} dígitos.
                   </p>
                   {modal === 'edit' && telefonoSinDato && (
                     <p className="text-xs text-amber-700 mt-1">
